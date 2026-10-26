@@ -36,7 +36,7 @@ def draw(t):
         ax.contour(XX, YY, grid.two_omega, levels=[c], colors=[t["muted"]], linewidths=0.8)
         ax.scatter([-MU], [0], s=50, color=t["earth"], zorder=5)
         ax.scatter([1 - MU], [0], s=22, color=t["moon"], zorder=5)
-        for k, r in pts.items():
+        for r in pts.values():
             ax.scatter(r[0], r[1], marker="D", s=16, color=t["series"][1], zorder=6)
         ax.set_aspect("equal")
         ax.set_xlim(-1.5, 1.5)
