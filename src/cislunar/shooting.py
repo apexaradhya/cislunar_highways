@@ -162,3 +162,23 @@ def correct_symmetric_fixed_period(
             return SymmetricOrbit(X, 2.0 * sol.t_final, mu, it - 1, float(np.max(np.abs(resid2))))
         X[free] -= np.linalg.solve(np.vstack([M2, dt]), G)
     raise CorrectionError(f"fixed-period correction failed (residual {np.max(np.abs(G)):.2e})")
+
+
+def correct_planar_fixed_energy(
+    X0_guess: FloatArray, mu: float, jacobi: float, tol: float = CROSSING_TOL
+) -> SymmetricOrbit:
+    """Planar symmetric periodic orbit with a prescribed Jacobi constant.
+
+    Unknowns (x0, vy0); equations vx_f = 0 and C(x0, vy0) - jacobi = 0, where
+    dC/dx0 = 2 dOmega/dx (at y=z=0) and dC/dvy0 = -2 vy0.
+    """
+    X = np.array(X0_guess, dtype=float)
+    X[[1, 2, 3, 5]] = 0.0
+    for it in range(1, MAX_ITER + 1):
+        resid, M, sol = crossing_jacobian(X, mu, (0, 4), (3,))
+        dC = np.array([2.0 * cr3bp.grad_pseudo_potential(X, mu)[0], -2.0 * X[4]])
+        G = np.array([resid[0], cr3bp.jacobi_constant(X, mu) - jacobi])
+        if np.max(np.abs(G)) < tol:
+            return SymmetricOrbit(X, 2.0 * sol.t_final, mu, it - 1, float(abs(resid[0])))
+        X[[0, 4]] -= np.linalg.solve(np.vstack([M, dC]), G)
+    raise CorrectionError(f"fixed-energy correction failed (residual {np.max(np.abs(G)):.2e})")

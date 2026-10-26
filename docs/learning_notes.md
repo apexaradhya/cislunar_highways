@@ -64,3 +64,9 @@ Ride the stable tube in, and you reach the halo for free.
 **Analogy.** A ball balanced on a ridge between two valleys. There is exactly one "gutter" along which a rolling ball comes to rest on the ridge. Every other path rolls off. The stable manifold is that gutter.
 **Key equation.** `X = γ(tᵢ) ± ε Φ(tᵢ,0) v_s`. Each period, distance along v_s shrinks by λ_s = 1/λ_u. For our L2 halo, λ_u = 980.6: errors grow 980× per 15-day lap.
 **Check yourself.** Why does making ε 10× smaller make the spacecraft leave about 5 days later, without giving a different tube? (Answer: one lap multiplies the distance by λ_u. Starting 10× closer costs ln10/ln λ_u of a lap, which is T·ln10/ln λ_u = 4.92 days. We measured 5.00.)
+
+## Phase 10: Poincaré sections and a free ride from L1 to L2
+**Idea.** A 3D tube of trajectories is hard to see. So we put up an imaginary "wall" (the plane x = 1 − μ, under the Moon) and mark where each trajectory pierces it. A tube leaves a closed loop on the wall. Two tubes' loops crossing each other means one trajectory lies on *both* tubes: it leaves one orbit and arrives on the other with no engine burn.
+**Analogy.** Two garden hoses passing through a fence. Where their holes in the fence overlap, water could flow from one hose straight into the other.
+**Key fact.** At C = 3.17, the first cuts of the L1-unstable and L2-stable tubes do *not* overlap. Their second cuts do. Refining that crossing gave a verified L1 → L2 transfer: **Δv = 0, 48.5 days**, with the full states matching to 4×10⁻¹⁰.
+**Check yourself.** Why does matching only (y, vy) on the wall guarantee the whole state matches, in the planar problem? (Answer: x is fixed by the wall, and both trajectories have the same C. That fixes the speed and so |vx|; we then check the sign of vx.)

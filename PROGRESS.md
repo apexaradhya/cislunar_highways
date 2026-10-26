@@ -164,3 +164,21 @@ Running log of phase status, test numbers, and decisions. Newest phase at the bo
 - **Finding:** forward-time convergence can only be watched for about one period. Any unstable component (roundoff, O(ε²) curvature) grows by λ_u per period and takes over. The multi-period exponential rate is therefore verified backward in time, where the stable direction is the growing one. The test covers both.
 - Figures: `p9_manifold_tubes_3d` (hero), `p9_manifold_tubes_xy`, `p9_asymptotic_rate`, `p9_eps_sensitivity`.
 - Process note: two script edits silently failed to apply (`str.replace` found no match after `ruff format` re-wrapped the lines), so a figure showed stale results. All edits now go through the Edit tool or assert a match.
+
+### Phase 10: Poincaré sections ✅
+- `poincare.py`:
+  - plane sections with crossing filters; tube cuts (n-th crossing)
+  - closed-curve gap metric; gap-aware curve splitting
+  - polyline intersections; strand crossing at arbitrary phase
+  - Newton refinement of tube–tube connections
+- `shooting.correct_planar_fixed_energy` (Lyapunov orbits at a prescribed C).
+- Section x = 1 − μ, y < 0, at C = 3.17 (between C2 and C1):
+  - L2 stable first cut: 160/160 strands; a closed curve (max neighbour gap 0.032, closing gap 0.018) ✅.
+  - L1 unstable first cut: 102/160 strands. The others hit the Moon, so that curve is open (physical, not a numerical issue).
+  - The L2 halo stable cut has 155/200 strands: an open 4D loop, again because of lunar impacts.
+- Time-reversal symmetry:
+  - The integrator is **bit-exactly** reversible (mirrored input gives mirrored output, difference 0.0).
+  - Unstable vs stable cuts match pointwise, with a median relative mismatch of 9e-10 and worst 3.2e-8, identical at integrator tolerance 1e-12 and 1e-13.
+  - Diagnosis: the mismatch comes from the starting points γ(t) and γ(T−t) (≈1e-12 apart; they are sampled from one forward pass), amplified by λ_u^(t/T) ≈ 1e4 over the flight. The test bound of 1e-7 is derived from this error budget. (This test is my own addition, not a spec tolerance.)
+- **Result:** the first cuts don't intersect. The second cuts intersect once, and Newton refinement of the two phases confirms a **heteroclinic L1 → L2 connection**: state mismatch 3.6e-10, vx = 0.234897 on both sides, Δv = 0, flight 22.2 + 26.3 = 48.5 d. Saved in `data/heteroclinic_L1_L2_C3.17.json`.
+- Figures: `p10_lyapunov_heteroclinic` (tubes, 1st cuts, 2nd cuts, verified connection) and `p10_halo_tube_cut`.
