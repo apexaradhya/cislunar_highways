@@ -83,7 +83,9 @@ def connectivity(grid: PlanarGrid, C: float, mu: float) -> Connectivity:
     )
 
 
-def _bisect_threshold(pred: Callable[[float], bool], c_hi: float, c_lo: float, tol: float = 1e-9) -> float:
+def _bisect_threshold(
+    pred: Callable[[float], bool], c_hi: float, c_lo: float, tol: float = 1e-9
+) -> float:
     """Largest C at which pred becomes True, given pred(c_hi) False and pred(c_lo) True."""
     assert not pred(c_hi) and pred(c_lo)
     while c_hi - c_lo > tol:
@@ -100,5 +102,7 @@ def neck_opening_values(grid: PlanarGrid, mu: float) -> dict[str, float]:
     return {
         "L1": _bisect_threshold(lambda C: connectivity(grid, C, mu).earth_moon, 3.5, 3.1),
         "L2": _bisect_threshold(lambda C: connectivity(grid, C, mu).moon_exterior, 3.5, 3.1),
-        "L3": _bisect_threshold(lambda C: connectivity(grid, C, mu).forbidden_components >= 2, 3.1, 3.001),
+        "L3": _bisect_threshold(
+            lambda C: connectivity(grid, C, mu).forbidden_components >= 2, 3.1, 3.001
+        ),
     }

@@ -135,3 +135,33 @@ def a_matrix(X: ArrayLike, mu: float) -> FloatArray:
     A[..., 3:6, 0:3] = H
     A[..., 3:6, 3:6] = CORIOLIS_K
     return A
+
+
+def make_rhs(mu: float):
+    """Fast f(t, X) for one 6-state, for the integrators.
+
+    Same equations as `equations_of_motion`, written with scalar math to avoid
+    numpy overhead on 3-element arrays (~5x faster). Tested against it.
+    """
+    one_m_mu = 1.0 - mu
+
+    def rhs(t: float, X: FloatArray) -> FloatArray:
+        x, y, z, vx, vy, vz = X
+        dx1 = x + mu
+        dx2 = x - one_m_mu
+        r1s = dx1 * dx1 + y * y + z * z
+        r2s = dx2 * dx2 + y * y + z * z
+        k1 = one_m_mu / (r1s * r1s**0.5)
+        k2 = mu / (r2s * r2s**0.5)
+        return np.array(
+            [
+                vx,
+                vy,
+                vz,
+                2.0 * vy + x - k1 * dx1 - k2 * dx2,
+                -2.0 * vx + y - (k1 + k2) * y,
+                -(k1 + k2) * z,
+            ]
+        )
+
+    return rhs

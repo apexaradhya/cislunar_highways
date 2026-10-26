@@ -92,7 +92,9 @@ def equilibrium_state(name: str, mu: float) -> FloatArray:
 
 def jacobi_at_points(mu: float) -> dict[str, float]:
     """Jacobi constant at each equilibrium (v = 0, so C = 2 Omega)."""
-    return {name: float(cr3bp.jacobi_constant(equilibrium_state(name, mu), mu)) for name in POINT_NAMES}
+    return {
+        name: float(cr3bp.jacobi_constant(equilibrium_state(name, mu), mu)) for name in POINT_NAMES
+    }
 
 
 def routh_critical_mu() -> float:

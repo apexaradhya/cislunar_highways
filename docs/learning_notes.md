@@ -36,3 +36,9 @@ That's "saddle × center × center".
 **Analogy.** A marble on a horse saddle: nudge it front-to-back and it wobbles back; nudge it side-to-side and it falls off. The two "center" directions are where halo and Lyapunov orbits live. The saddle direction is where the manifold "highways" come from.
 **Key equation.** `s⁴ + (2 − c)s² + (1 + c − 2c²) = 0`, giving `λ² = (c − 2 + √(9c² − 8c))/2`. At L1, λ = 2.93, so errors grow by e every 1.48 days.
 **Check yourself.** Why do halo orbits near L1 need regular station-keeping burns, while JWST-style orbits around Sun–Earth L2 need them only every few weeks? (Hint: λ in physical units depends on the system's time unit: 4.34 days for Earth–Moon, ~58 days for Sun–Earth.)
+
+## Phase 6: The State Transition Matrix (STM)
+**Idea.** The STM Φ is a 6×6 "sensitivity table". Entry Φᵢⱼ tells you how much final coordinate i changes when you nudge initial coordinate j. It answers "if I aim 1 km to the left, where do I end up?" without re-flying the trajectory. We get it by integrating 36 extra equations, `dΦ/dt = A(t) Φ`, alongside the trajectory.
+**Analogy.** A ripple map. Drop a pebble (small error) at the start, and Φ tells you how big the ripple is, and in which direction it points, at the end.
+**Key equation.** `δX(t) ≈ Φ(t,0) δX(0)`. Two built-in sanity checks: det Φ = 1 (phase-space volume is never squashed, because trace A = 0) and `ΦᵀJΦ = J` (the dynamics are symplectic, a "Hamiltonian fingerprint").
+**Check yourself.** Why do we check Φ against finite differences, and why don't they agree perfectly? (Answer: finite differences are an independent, brute-force estimate. They carry their own truncation and round-off error, about 10⁻⁹ relative here.)

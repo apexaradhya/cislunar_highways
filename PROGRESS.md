@@ -78,3 +78,12 @@ Running log of phase status, test numbers, and decisions. Newest phase at the bo
   | L3 | 0.177875 | 1.010420 | 1.005331 | 27.00 d | 24.4 d |
 
 - numpy.eig vs analytic: max error 8.9e-16 (spec: 1e-10). Saddle × center × center confirmed at all three points. Ω_xx = 1+2c, Ω_yy = 1−c, Ω_zz = −c to 1e-14.
+
+### Phase 6: STM propagation ✅
+- `stm.py`: 42-dim augmented RHS (fast scalar path, checked against `a_matrix`), `propagate_stm`, `split`, finite-difference STM. `cr3bp.make_rhs` is a fast single-state EOM, checked against the reference EOM to 1e-13.
+- Checks (`docs/figures/p6_stm_checks.txt`):
+  - Finite-difference STM vs propagated STM: 5.5e-9 and 1.7e-9 relative (spec ~1e-6).
+  - Symplectic ΦᵀJ_vΦ = J_v to 1e-15 relative.
+  - |det Φ − 1| ≤ 1.6e-12 (spec 1e-9).
+  - Jacobi drift ≤ 2e-14.
+- Decision: implemented **both** checks. Symplecticity uses J_v = [[W, I], [−I, 0]] in velocity coordinates, where W = [[0,−2,0],[2,0,0],[0,0,0]] is the Coriolis twist. This is because p = v + ω×r, so J_v = TᵀJT. Its infinitesimal form `AᵀJ_v + J_vA = 0` is also tested at random states.
