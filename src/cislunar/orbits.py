@@ -16,7 +16,13 @@ import numpy as np
 from numpy.typing import NDArray
 
 from cislunar import lagrange, stm
-from cislunar.shooting import CorrectionError, SymmetricOrbit, correct_symmetric, full_period
+from cislunar.shooting import (
+    CorrectionError,
+    SymmetricOrbit,
+    correct_symmetric,
+    crossing_jacobian,
+    full_period,
+)
 
 FloatArray = NDArray[np.float64]
 ComplexArray = NDArray[np.complex128]
@@ -171,3 +177,166 @@ def lyapunov_family(which: int, mu: float, amplitudes: FloatArray, max_halvings:
                 if halvings > max_halvings:
                     raise FamilyJumpError(f"continuation stalled near amplitude {a_prev:.5f}")
     return fam
+
+
+# ---------------------------------------------------------------------------
+# Halo orbits (PROJECT_SPEC.md Phase 8)
+# ---------------------------------------------------------------------------
+# Along a planar Lyapunov family, a second pair of monodromy eigenvalues (the
+# "vertical" pair) sits on the unit circle with stability index nu_v < 1 for small
+# orbits. Where nu_v crosses +1, the monodromy matrix gains an extra eigenvalue 1:
+# a new direction of periodic motion appears, and the 3D halo family branches off
+# (Howell 1984; Grebow 2006, M.S. thesis, Purdue, sec. 3.3). We locate that crossing,
+# step off in z0, and continue the halo family by pseudo-arclength continuation.
+
+
+def vertical_index(orbit: SymmetricOrbit) -> float:
+    """Stability index of the non-trivial pair closest to the unit circle."""
+    return min(stability(orbit).indices, key=abs)
+
+
+def find_halo_bifurcation(
+    which: int, mu: float, a_lo: float, a_hi: float, tol: float = 1e-7
+) -> SymmetricOrbit:
+    """Lyapunov orbit (on the family's x-crossing side) where nu_v crosses +1.
+
+    Requires nu_v - 1 to change sign between amplitudes a_lo and a_hi.
+    Bisection; each probe is reached by continuation from a_lo.
+    """
+    fam_lo = lyapunov_family(which, mu, np.linspace(min(2e-3, a_lo), a_lo, 6))
+    fam_hi = lyapunov_family(which, mu, np.linspace(min(2e-3, a_lo), a_hi, 10))
+    lo, hi = fam_lo.orbits[-1], fam_hi.orbits[-1]
+    g_lo, g_hi = vertical_index(lo) - 1.0, vertical_index(hi) - 1.0
+    if g_lo * g_hi > 0:
+        raise ValueError("nu_v - 1 does not change sign on the bracket")
+    while abs(hi.X0[0] - lo.X0[0]) > tol:
+        X0 = 0.5 * (lo.X0 + hi.X0)
+        mid = correct_symmetric(X0, mu, free=(4,), targets=(3,))
+        g = vertical_index(mid) - 1.0
+        if g * g_lo > 0:
+            lo, g_lo = mid, g
+        else:
+            hi, g_hi = mid, g
+    # Return the closer-to-bifurcation end (linear interpolation of g picks it).
+    return lo if abs(g_lo) < abs(g_hi) else hi
+
+
+def halo_from_bifurcation(bif: SymmetricOrbit, z0: float) -> SymmetricOrbit:
+    """Step off the bifurcating Lyapunov orbit to a small halo with given z0 (sign = class)."""
+    X0 = bif.X0.copy()
+    X0[2] = z0
+    return correct_symmetric(X0, bif.mu, free=(0, 4), targets=(3, 5))
+
+
+HALO_FREE = (0, 2, 4)  # (x0, z0, vy0)
+HALO_TARGETS = (3, 5)  # (vx, vz) at the half-period crossing
+
+
+def _null_vector(M: FloatArray) -> FloatArray:
+    """Unit vector spanning the null space of a full-rank 2x3 matrix (via SVD)."""
+    _, _, Vt = np.linalg.svd(M)
+    return Vt[-1]
+
+
+def pseudo_arclength_family(
+    seed: SymmetricOrbit,
+    n_orbits: int,
+    ds: float,
+    mu: float,
+    direction: FloatArray | None = None,
+    stop: object = None,
+    tol: float = 1e-11,
+    max_iter: int = 12,
+    ds_max: float | None = None,
+) -> Family:
+    """Pseudo-arclength continuation of a symmetric 3D family (Keller 1977; Doedel et al. AUTO).
+
+    Unknowns q = (x0, z0, vy0); equations F(q) = (vx_f, vz_f) = 0 plus the arclength
+    constraint (q - q_prev) . tau_prev = ds, where tau is the unit tangent to the
+    solution curve (null vector of dF/dq). Unlike stepping in a fixed parameter, this
+    follows the curve through turning points (folds) in any single coordinate.
+
+    direction: initial tangent hint (its sign picks which way to go along the family).
+    stop: optional callable(orbit) -> bool; the first orbit for which it is True is
+        *not* kept, and continuation ends (e.g. "perilune below the lunar surface").
+    The step adapts: halved on failure, grown 1.2x after easy convergence, capped at
+    |ds_max| (default 2|ds|).
+    """
+    fam = Family("halo")
+    q = seed.X0[list(HALO_FREE)].copy()
+    _, M, _ = crossing_jacobian(seed.X0, mu, HALO_FREE, HALO_TARGETS)
+    tau = _null_vector(M)
+    if direction is not None and tau @ direction < 0:
+        tau = -tau
+    fam.orbits.append(seed)
+    ds_cur = ds
+    ds_cap = abs(ds_max) if ds_max is not None else 2.0 * abs(ds)
+    while len(fam.orbits) < n_orbits:
+        q_pred = q + ds_cur * tau
+        X = seed.X0.copy()
+        converged = False
+        try:
+            for it in range(max_iter):  # noqa: B007 (iteration count used after the loop)
+                X[list(HALO_FREE)] = q_pred
+                resid, M, sol = crossing_jacobian(X, mu, HALO_FREE, HALO_TARGETS)
+                arc = (q_pred - q) @ tau - ds_cur
+                G = np.concatenate([resid, [arc]])
+                if np.max(np.abs(resid)) < tol and abs(arc) < 1e-12:
+                    converged = True
+                    break
+                DG = np.vstack([M, tau])
+                q_pred = q_pred - np.linalg.solve(DG, G)
+        except (CorrectionError, np.linalg.LinAlgError):
+            converged = False
+        if not converged:
+            ds_cur *= 0.5
+            if abs(ds_cur) < 1e-7 * abs(ds):
+                break
+            continue
+        # Polish at fixed z0 (2-variable corrector incl. its extra Newton step): unstable
+        # orbits amplify the leftover crossing residual by ~lambda_u over one period.
+        try:
+            orbit = correct_symmetric(X, mu, free=(0, 4), targets=HALO_TARGETS, tol=tol)
+        except CorrectionError:
+            orbit = SymmetricOrbit(
+                X.copy(), 2.0 * sol.t_final, mu, it, float(np.max(np.abs(resid)))
+            )
+        q_pred = orbit.X0[list(HALO_FREE)].copy()
+        if abs(orbit.period - fam.orbits[-1].period) > MAX_PERIOD_JUMP:
+            ds_cur *= 0.5
+            continue
+        new_tau = _null_vector(M)
+        if new_tau @ tau < 0:
+            new_tau = -new_tau
+        if stop is not None and stop(orbit):
+            break
+        q, tau = q_pred, new_tau
+        fam.orbits.append(orbit)
+        if it <= 3:
+            ds_cur = float(np.sign(ds_cur)) * min(abs(ds_cur) * 1.2, ds_cap)
+    return fam
+
+
+def mirror_z(orbit: SymmetricOrbit) -> SymmetricOrbit:
+    """The CR3BP is symmetric under z -> -z: northern <-> southern halo classes."""
+    X0 = orbit.X0.copy()
+    X0[2] = -X0[2]
+    X0[5] = -X0[5]
+    return SymmetricOrbit(X0, orbit.period, orbit.mu, orbit.iterations, orbit.residual)
+
+
+def perilune(orbit: SymmetricOrbit, n_points: int = 2000) -> float:
+    """Closest approach to the Moon's center over one period (non-dimensional).
+
+    Dense samples, then the minimum is refined with a local quadratic fit.
+    """
+    sol = full_period(orbit, n_points=n_points)
+    X = sol.X[:, :3]
+    r = np.linalg.norm(X - np.array([1.0 - orbit.mu, 0.0, 0.0]), axis=1)
+    i = int(np.argmin(r))
+    if 0 < i < len(r) - 1:
+        r0, r1, r2 = r[i - 1], r[i], r[i + 1]
+        denom = r0 - 2 * r1 + r2
+        if denom > 0:
+            return float(r1 - 0.125 * (r2 - r0) ** 2 / denom)
+    return float(r[i])

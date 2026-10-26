@@ -165,3 +165,9 @@ def make_rhs(mu: float):
         )
 
     return rhs
+
+
+def jacobi_gradient(X: ArrayLike, mu: float) -> FloatArray:
+    """dC/dX = (2 dOmega/dx, 2 dOmega/dy, 2 dOmega/dz, -2 vx, -2 vy, -2 vz)."""
+    X = np.asarray(X, dtype=float)
+    return np.concatenate([2.0 * grad_pseudo_potential(X, mu), -2.0 * X[..., 3:6]], axis=-1)

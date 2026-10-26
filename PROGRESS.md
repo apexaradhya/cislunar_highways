@@ -105,3 +105,39 @@ Running log of phase status, test numbers, and decisions. Newest phase at the bo
 - Decision: the L2 family is parametrized by its **far-side** x-crossing. The Moon-side parametrization marched into the Moon and silently jumped to a small lunar orbit (period 0.02); a period-jump guard now catches this.
 - **Pending:** `tests/test_lyapunov.py::test_matches_jpl_catalog` is skipped until catalog entries are provided (`tests/data/jpl_lyapunov.json`).
 - Figures: `p7_lyapunov_families`, `p7_lyapunov_stability`.
+
+### Phase 8: Halo orbits ⚠️ (complete except the JPL catalog comparison)
+- `orbits.py`:
+  - Halo bifurcation finder (bisection on ν_v − 1 along the Lyapunov family); step-off into 3D.
+  - Pseudo-arclength continuation (unknowns x0, z0, vy0; SVD tangent; adaptive step; polish at fixed z0).
+  - Mirror (north/south), perilune.
+- `shooting.py`: `crossing_jacobian` (shared) and `correct_symmetric_fixed_period` (3×3 Newton with the period constraint).
+- Bifurcations:
+
+  | Point | x0 | Period | C |
+  |---|---|---|---|
+  | L1 | 0.82339089 | 2.74299426 (11.91 d) | 3.18635484 |
+  | L2 | 1.18089853 | 3.41553077 (14.83 d) | 3.16412188 |
+
+- Families: L1 has 57 orbits (7.8–12.1 d) and L2 has 53 orbits (6.0–14.8 d). Both are continued until the perilune is < 100 km above the surface. Data is in `data/halo_L{1,2}_north.npz`; southern = z-mirror.
+  - Max closure 2.3e-12. Crossing residual ≤ 2.4e-13. Reciprocal pairs to 9e-10.
+  - z0 has a fold (turning point) along the L2 family, so continuation in z0 alone would fail; pseudo-arclength goes around it.
+- **9:2 L2 southern NRHO** (period fixed at 2 × 29.530589 / 9 d = 6.56235 d; `data/nrho_9_2_south.json`):
+
+  | Quantity | Value |
+  |---|---|
+  | X0 | [1.02202821, 0, −0.18210139, 0, −0.10327095, 0] |
+  | C | 3.0585 |
+  | Perilune radius | 3,249 km (altitude 1,512 km) |
+  | Apolune radius | 71,222 km, over the south pole |
+  | Stability indices | −1.32, 0.68 (mildly unstable) |
+
+  - Comparison: Davis et al. (AAS 2020) report Gateway's osculating perilune radius as 3,195–3,557 km and apolune radius as 70,005–71,849 km. Our CR3BP values lie inside both ranges.
+  - **Unverified:** these published numbers come from a web-search summary. The PDFs (ntrs.nasa.gov) are unreachable from this environment, so please confirm them before presenting. They are not used as a pass/fail test.
+- **Decision (please review):**
+  - The spec asks for the trivial monodromy pair to be (1, 1) to 1e-6 *individually*. Measured splits are 2e-8 to 9e-6.
+  - Cause: 1 is a defective eigenvalue (Jordan block), so its eigenvalues are ill-conditioned. Error ε splits them by √(ε‖M‖) (Trefethen & Bau 1997, Lecture 25), with ‖M‖ up to ~10³.
+  - Response: the test now checks the well-conditioned facts that the pair encodes: M f = f, ∇Cᵀ M = ∇Cᵀ, and mean of the pair = 1, all to 1e-7 or better. The raw split is reported, not hidden.
+  - Tried and rejected: a half-period symmetric monodromy formula. It agrees with the full-period M to 4e-12, but on near-Moon orbits it was worse (split 3.5e-4).
+- **Pending:** `test_halo.py::test_matches_jpl_catalog` is skipped until JPL halo entries are available.
+- Figures: `p8_halo_families_3d`, `p8_halo_projections`, `p8_halo_stability`, `p8_nrho_9_2`.

@@ -76,3 +76,7 @@ def make_system(gm1_km3_s2: float, gm2_km3_s2: float, length_km: float) -> Syste
 
 
 EARTH_MOON: SystemUnits = make_system(GM_EARTH_KM3_S2, GM_MOON_KM3_S2, EARTH_MOON_DISTANCE_KM)
+
+# Mean synodic month (new moon to new moon). Explanatory Supplement to the
+# Astronomical Almanac (3rd ed., 2013), ch. 3; also NASA Moon Fact Sheet.
+SYNODIC_MONTH_DAYS: float = 29.530589

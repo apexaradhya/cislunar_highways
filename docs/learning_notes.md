@@ -48,3 +48,9 @@ That's "saddle × center × center".
 **Analogy.** Throwing a ball at a wall so it bounces straight back. Miss the angle a bit, see how far off you were, adjust the throw, and repeat. Two or three throws are enough.
 **Key equation.** `δvx_f = [Φ₄₅ − (a_x/v_y) Φ₂₅] δvy₀`. The `(a_x/v_y)` term exists because changing vy₀ also changes *when* you cross the axis.
 **Check yourself.** Why can't we just take a big orbit's starting point from the linear formula? (Answer: the linear solution is only accurate for small orbits. For big ones, Newton's method starts too far away and diverges. That's why we "walk" out step by step, which is called continuation.)
+
+## Phase 8: Halo orbits and the NRHO
+**Idea.** Grow a planar Lyapunov orbit bigger and bigger. At one special size, its side-to-side rhythm and the natural up-and-down rhythm match. At that point a new, tilted, three-dimensional orbit family branches off: the halo orbits. Following that family toward the Moon leads to the Near-Rectilinear Halo Orbits (NRHOs), long skinny loops that dip close over one lunar pole. NASA chose one of these for the Gateway station.
+**Analogy.** Pushing a child on a swing who starts twisting. Once the twisting rhythm matches the swinging rhythm, the motion locks into a new 3D pattern.
+**Key equation.** Bifurcation where the vertical stability index ν_v = (λ + 1/λ)/2 crosses +1. Our 9:2 NRHO (period = 2/9 of a synodic month = 6.562 d) has perilune radius 3,249 km and apolune radius 71,222 km. NASA's published orbit is about 3,200–3,560 km and 70,000–71,850 km.
+**Check yourself.** Why couldn't we just keep increasing z₀ to walk along the family? (Answer: z₀ reaches a maximum and turns back, a "fold". Pseudo-arclength continuation steps along the curve itself, so it can go around the bend.)

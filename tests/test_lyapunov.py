@@ -62,6 +62,8 @@ def test_monodromy_structure(fam_name: str, request) -> None:
         assert abs(0.5 * (a + b) - 1.0) < TRIVIAL_MEAN_TOL
         f = cr3bp.equations_of_motion(0.0, o.X0, MU)
         assert np.linalg.norm(st.monodromy @ f - f) / np.linalg.norm(f) < FLOW_EIGVEC_TOL
+        g = cr3bp.jacobi_gradient(o.X0, MU)  # energy conservation: gradC is a left eigenvector
+        assert np.linalg.norm(g @ st.monodromy - g) / np.linalg.norm(g) < FLOW_EIGVEC_TOL
         for p, q in st.pairs:
             assert abs(p * q - 1.0) < RECIPROCAL_TOL
         assert st.max_index > 1.0  # planar Lyapunov orbits near L1/L2 are unstable

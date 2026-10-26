@@ -67,6 +67,25 @@ def half_period_crossing(
     return sol
 
 
+def crossing_jacobian(
+    X: FloatArray, mu: float, free: Sequence[int], targets: Sequence[int]
+) -> tuple[FloatArray, FloatArray, Solution]:
+    """Residual (targets at the half-period crossing) and its Jacobian w.r.t. `free`.
+
+    Includes the crossing-time correction terms (module docstring).
+    """
+    sol = half_period_crossing(X, mu)
+    Xf, Phi = stm.split(sol.X_final)
+    acc = cr3bp.equations_of_motion(0.0, Xf, mu)[3:]
+    vy_f = Xf[4]
+    M = np.empty((len(targets), len(free)))
+    for r, ti in enumerate(targets):
+        a_t = acc[ti - 3]
+        for c, fj in enumerate(free):
+            M[r, c] = Phi[ti, fj] - (a_t / vy_f) * Phi[1, fj]
+    return Xf[list(targets)], M, sol
+
+
 def correct_symmetric(
     X0_guess: FloatArray,
     mu: float,
@@ -88,9 +107,7 @@ def correct_symmetric(
     free, targets = list(free), list(targets)
     best: SymmetricOrbit | None = None
     for it in range(1, max_iter + 1):
-        sol = half_period_crossing(X, mu)
-        Xf, Phi = stm.split(sol.X_final)
-        resid = Xf[targets]
+        resid, M, sol = crossing_jacobian(X, mu, free, targets)
         err = float(np.max(np.abs(resid)))
         if best is not None:
             # Polishing step taken after convergence: keep whichever is better.
@@ -101,13 +118,6 @@ def correct_symmetric(
             # Converged. Unstable orbits amplify any leftover residual by ~lambda_u over a
             # period, so take one more (nearly free) Newton step to squeeze it further.
             best = SymmetricOrbit(X.copy(), 2.0 * sol.t_final, mu, it - 1, err)
-        acc = cr3bp.equations_of_motion(0.0, Xf, mu)[3:]  # (ax, ay, az) at the crossing
-        vy_f = Xf[4]
-        M = np.empty((len(targets), len(free)))
-        for r, ti in enumerate(targets):
-            a_t = acc[ti - 3]
-            for c, fj in enumerate(free):
-                M[r, c] = Phi[ti, fj] - (a_t / vy_f) * Phi[1, fj]
         dq = np.linalg.lstsq(M, -resid, rcond=None)[0]
         scale = np.max(np.abs(dq))
         if scale > max_step:
@@ -124,3 +134,31 @@ def full_period(
     return stm.propagate_stm(
         orbit.X0, 0.0, orbit.period, orbit.mu, rtol=tol, atol=tol, t_eval=t_eval
     )
+
+
+def correct_symmetric_fixed_period(
+    X0_guess: FloatArray,
+    mu: float,
+    period: float,
+    tol: float = CROSSING_TOL,
+    max_iter: int = MAX_ITER,
+) -> SymmetricOrbit:
+    """Symmetric 3D orbit with a prescribed period: unknowns (x0, z0, vy0).
+
+    Equations: vx_f = 0, vz_f = 0, t_f - period/2 = 0. The crossing time responds to
+    q_j as dt_f/dq_j = -Phi[1, j] / vy_f (from keeping y_f = 0), which gives the
+    third row of the Newton matrix.
+    """
+    X = np.array(X0_guess, dtype=float)
+    X[[1, 3, 5]] = 0.0
+    free = [0, 2, 4]
+    for it in range(1, max_iter + 1):
+        resid2, M2, sol = crossing_jacobian(X, mu, free, (3, 5))
+        _, Phi = stm.split(sol.X_final)
+        vy_f = sol.X_final[4]
+        dt = np.array([-Phi[1, j] / vy_f for j in free])
+        G = np.concatenate([resid2, [sol.t_final - 0.5 * period]])
+        if np.max(np.abs(G)) < tol:
+            return SymmetricOrbit(X, 2.0 * sol.t_final, mu, it - 1, float(np.max(np.abs(resid2))))
+        X[free] -= np.linalg.solve(np.vstack([M2, dt]), G)
+    raise CorrectionError(f"fixed-period correction failed (residual {np.max(np.abs(G)):.2e})")
