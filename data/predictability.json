@@ -1,0 +1,49 @@
+{
+  "lambda_u": 980.5639216713128,
+  "period_days": 14.73081170936744,
+  "sigma_r_km": 0.001,
+  "sigma_v_m_s": 0.01,
+  "unstable_rms_m": 986.4308426350119,
+  "forecast": [
+    {
+      "threshold_km": 10.0,
+      "measured_days": 4.7955063160712035,
+      "predicted_days": 4.953479594091417
+    },
+    {
+      "threshold_km": 100.0,
+      "measured_days": 9.369681571400658,
+      "predicted_days": 9.87774178188461
+    },
+    {
+      "threshold_km": 1000.0,
+      "measured_days": 14.829181069697105,
+      "predicted_days": 14.8020039696778
+    },
+    {
+      "threshold_km": 10000.0,
+      "measured_days": 19.624687385768308,
+      "predicted_days": 19.726266157470995
+    }
+  ],
+  "monte_carlo": {
+    "manifold": {
+      "sigma_tli_m_s": 1.0,
+      "n": 1000,
+      "miss_median_km": 1728.7241219381037,
+      "miss_95_km": 5298.453622686641,
+      "tcm_median_m_s": 6.3821416522390315,
+      "tcm_95_m_s": 19.66949137985722,
+      "residual_max_km": 2.0839201073357287
+    },
+    "direct": {
+      "sigma_tli_m_s": 1.0,
+      "n": 1000,
+      "miss_median_km": 3706.418837478386,
+      "miss_95_km": 10554.207440195907,
+      "tcm_median_m_s": 5.642573051180018,
+      "tcm_95_m_s": 15.953749870583124,
+      "residual_max_km": 4.240272822476471
+    }
+  }
+}

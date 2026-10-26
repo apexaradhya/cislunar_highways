@@ -86,3 +86,9 @@ Ride the stable tube in, and you reach the halo for free.
 
 The manifold route saves 671 m/s, about 16%, and pays for it in time: 27× longer.
 **Check yourself.** Why can't the manifold route skip the TLI burn entirely? (Answer: in the Earth–Moon CR3BP, these manifolds never come closer than ~40,000 km to Earth. You still have to climb out of Earth's deep gravity well. Missions like CAPSTONE use the *Sun's* pull to get closer, which our model leaves out.)
+
+## Phase 11c: How far ahead can we predict?
+**Idea.** The model is deterministic: same start, same answer. But near a halo orbit, tiny errors grow about 980× every 15-day lap. So "predictable" has a horizon. Fly 500 copies of a spacecraft, each off by ~1 m and ~1 cm/s. After 15 days they are ~1,000 km apart, and after a month they are scattered across the Earth–Moon system.
+**Analogy.** Weather forecasting. The physics is exact, but a small error in today's measurement grows into a wrong forecast in about two weeks.
+**Key equation.** Only the part of the error along the unstable direction grows: `spread(t) ≈ |c_u| · λ_u^(t/T)`, with `c_u` found from the left eigenvector of the monodromy matrix. This forecast matched the 500-spacecraft simulation to within 0.5 days from 10 km to 10,000 km.
+**Check yourself.** Why did our first forecast fail? (Answer: we only counted the 1 m position error. The 1 cm/s velocity error has a much bigger component, ~1 km, along the unstable direction.)

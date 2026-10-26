@@ -214,3 +214,26 @@ Running log of phase status, test numbers, and decisions. Newest phase at the bo
   - The manifold arc's nominal arrival lands 254 km from the halo instead of ε = 3.8 km. 165 days through a chaotic region magnify ~1e-12 integration error about 10⁸×. Closest approach is 44 km, and the clean-up insertion is 0.2 m/s. A real mission would fly trajectory-correction maneuvers.
   - LEO plane is free (the departure plane is chosen to contain the needed velocity). Launch-site constraints are ignored.
 - Figures: `p11_transfer_rotating`, `p11_transfer_inertial`, `p11_dv_vs_tof`, `p11_dv_breakdown`, `p11_arrival_distance`.
+
+### Phase 11c: Predictability ✅ (approved add-on)
+- `predictability.py`: batch propagation (N states as one ODE), butterfly fan, unstable-component projection (left eigenvector of M), error-growth forecast, TLI burn-error Monte Carlo with linear TCM targeting + nonlinear check.
+- **Butterfly fan:** 500 copies on the L2 halo, σ = 1 m / 1 cm/s per axis, λ_u = 980.6.
+
+  | Spread | Measured | Forecast |
+  |---|---|---|
+  | 10 km | 4.8 d | 5.0 d |
+  | 100 km | 9.4 d | 9.9 d |
+  | 1,000 km | 14.8 d | 14.8 d |
+  | 10,000 km | 19.6 d | 19.7 d |
+
+- **Finding:** the first forecast used only the position error and was off by about 13 days. Velocity errors dominate: the rms unstable amplitude is 986 m against a 1.7 m position error. Projecting onto the unstable direction fixed the forecast.
+- **TLI Monte Carlo** (1 m/s per axis, 1,000 runs):
+
+  | Transfer | Patch miss (median / 95%) | Day-1 TCM (median / 95%) | Nonlinear residual after TCM |
+  |---|---|---|---|
+  | Manifold | 1,729 / 5,298 km | 6.4 / 19.7 m/s | ≤ 2.1 km |
+  | Direct | 3,706 / 10,554 km | 5.6 / 16.0 m/s | ≤ 4.2 km |
+
+- Tests: batch propagation = individual to 1e-9; unstable component recovered to 1e-6; forecast within 2 d on a 60-member ensemble.
+- Figures: `p11c_butterfly_fan`, `p11c_tli_monte_carlo`. Data: `data/predictability.json`, `data/butterfly_fan.npz`.
+- Phase 11b design sweep is still running (`scripts/run_phase11b_sweep.py`; 7 halos × 2 LEO altitudes).

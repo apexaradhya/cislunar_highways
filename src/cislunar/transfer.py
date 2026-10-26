@@ -462,3 +462,69 @@ def refine(
         ),
     )
     return res.x, float(res.fun)
+
+
+def design_candidates(
+    orbit,
+    units: SystemUnits,
+    leo_alt_km: float = 185.0,
+    n_correct: int = 30,
+    n_direct: int = 10,
+    n_strands: int = 60,
+    duration: float = 40.0,
+) -> list[dict]:
+    """Screen + CR3BP-correct direct and manifold transfers to one orbit (no refinement).
+
+    Returns one dict per corrected candidate: kind, dv1/dv2/total (km/s), TOF (days),
+    and how to rebuild it (branch sign, phase, tau). Used by the design sweep.
+    """
+    r0 = R_EARTH_KM + leo_alt_km
+    out: list[dict] = []
+
+    def distinct(c: PatchCandidates, sc: ConicScreen, n: int, bucket_days: float) -> list[int]:
+        seen, keep = set(), []
+        for k in np.argsort(sc.total):
+            if not np.isfinite(sc.total[k]):
+                break
+            key = (
+                c.sign[k],
+                round(c.phase[k] * n_strands),
+                round(c.tau[k] * units.time_days / bucket_days),
+            )
+            if key not in seen:
+                seen.add(key)
+                keep.append(int(k))
+            if len(keep) >= n:
+                break
+        return keep
+
+    for kind, c, n, bucket in (
+        ("direct", orbit_patch_candidates(orbit, 200), n_direct, 1e9),
+        (
+            "manifold",
+            manifold_patch_candidates(orbit, units, n_strands=n_strands, duration=duration),
+            n_correct,
+            3.0,
+        ),
+    ):
+        sc = screen_candidates(c, r0, units)
+        for k in distinct(c, sc, n, bucket):
+            try:
+                tr = correct_patch(c.X[k], r0, units)
+            except (TransferError, RuntimeError, np.linalg.LinAlgError):
+                continue
+            out.append(
+                dict(
+                    kind=kind,
+                    dv1=tr.dv1_km_s,
+                    dv2=tr.dv2_km_s,
+                    total=tr.dv_total_km_s,
+                    tof_days=(tr.tof_leg1 + c.tau[k]) * units.time_days,
+                    leg1_days=tr.tof_leg1 * units.time_days,
+                    sign=float(c.sign[k]),
+                    phase=float(c.phase[k]),
+                    tau=float(c.tau[k]),
+                    leo_alt_km=leo_alt_km,
+                )
+            )
+    return out
