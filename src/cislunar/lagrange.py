@@ -24,6 +24,7 @@ imaginary roots iff 27 mu (1-mu) < 1, i.e. mu < mu_Routh = (1 - sqrt(23/27))/2.
 from __future__ import annotations
 
 import math
+from dataclasses import dataclass
 
 import numpy as np
 from numpy.typing import NDArray
@@ -103,3 +104,62 @@ def triangular_is_linearly_stable(mu: float, tol: float = 1e-10) -> bool:
     """Numerical test: all eigenvalues of A at L4 have |Re| <= tol (spectrally stable)."""
     eig = np.linalg.eigvals(cr3bp.a_matrix(equilibrium_state("L4", mu), mu))
     return bool(np.max(np.abs(eig.real)) <= tol)
+
+
+# ---------------------------------------------------------------------------
+# Linear dynamics at the collinear points (PROJECT_SPEC.md 1.6, Phase 5)
+# ---------------------------------------------------------------------------
+# With c as above, Omega_xx = 1 + 2c, Omega_yy = 1 - c, Omega_zz = -c, all cross terms 0.
+# Linearized motion about Li (xi = x - xL, eta = y, zeta = z):
+#     xi''  - 2 eta' = (1 + 2c) xi
+#     eta'' + 2 xi'  = (1 - c) eta
+#     zeta''         = -c zeta
+# Trying e^{st} in the planar pair gives s^4 + (2 - c) s^2 + (1 + c - 2c^2) = 0, a
+# quadratic in u = s^2 with discriminant (2-c)^2 - 4(1+c-2c^2) = 9c^2 - 8c > 0 for c > 1:
+#     u_+ = (c - 2 + sqrt(9c^2 - 8c)) / 2 > 0  -> s = +-lambda   (saddle)
+#     u_- = (c - 2 - sqrt(9c^2 - 8c)) / 2 < 0  -> s = +-i omega_p (planar center)
+# and the vertical oscillation has frequency nu = sqrt(c)  (vertical center).
+# (Koon, Lo, Marsden & Ross 2011, sec. 2.7; Szebehely 1967, sec. 5.4.)
+
+
+@dataclass(frozen=True)
+class CollinearModes:
+    name: str
+    x: float
+    c: float
+    lam: float  # real (saddle) exponent
+    omega_p: float  # in-plane oscillation frequency
+    nu: float  # out-of-plane oscillation frequency
+    k: float  # in-plane ellipse ratio: eta amplitude = k * xi amplitude
+
+    @property
+    def planar_period(self) -> float:
+        return 2.0 * math.pi / self.omega_p
+
+    @property
+    def vertical_period(self) -> float:
+        return 2.0 * math.pi / self.nu
+
+
+def collinear_modes(which: int, mu: float) -> CollinearModes:
+    """Analytic linear exponents and frequencies at L1/L2/L3."""
+    x = collinear_point(which, mu)
+    c = collinear_c(x, mu)
+    disc = math.sqrt(9.0 * c * c - 8.0 * c)
+    u_plus = 0.5 * (c - 2.0 + disc)
+    u_minus = 0.5 * (c - 2.0 - disc)
+    omega_p = math.sqrt(-u_minus)
+    # In-plane periodic linear solution xi = A cos(w t), eta = -k A sin(w t), with
+    # k = (w^2 + 1 + 2c) / (2 w) from the xi equation.
+    k = (omega_p**2 + 1.0 + 2.0 * c) / (2.0 * omega_p)
+    return CollinearModes(f"L{which}", x, c, math.sqrt(u_plus), omega_p, math.sqrt(c), k)
+
+
+def linear_lyapunov_state(which: int, mu: float, amplitude: float) -> FloatArray:
+    """Initial state on the linearized planar periodic orbit around Li.
+
+    xi(0) = A_x (on the x-axis), eta(0) = 0, xi'(0) = 0, eta'(0) = -k omega_p A_x.
+    Used to seed the differential corrector for planar Lyapunov orbits (Phase 7).
+    """
+    m = collinear_modes(which, mu)
+    return np.array([m.x + amplitude, 0.0, 0.0, 0.0, -m.k * m.omega_p * amplitude, 0.0])

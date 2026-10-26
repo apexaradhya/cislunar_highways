@@ -25,3 +25,14 @@ One short note per phase: the idea in plain language, an analogy, the key equati
 **Analogy.** A ball rolling in a bowl with a dent in the rim. With too little energy it can't get over the dent. With just a bit more, there's a narrow pass. L1 is that pass, and it's exactly where low-energy transfers squeeze through.
 **Key equation.** Forbidden region: `2Ω(x, y, 0) < C`. The neck at Lᵢ opens when C < C(Lᵢ).
 **Check yourself.** We found where the necks open using only geometry (flood-filling the allowed region on a grid). Why is it convincing that the results match C(L1), C(L2), C(L3) from Phase 3 to within 10⁻⁵? (Answer: the two methods are independent, one root-finding and one picture-based, so agreement is strong evidence both are right.)
+
+## Phase 5: Linear stability at L1, L2, L3
+**Idea.** Zoom in close enough to a Lagrange point and the curved gravity field looks like a simple "tilted saddle". The motion then splits into three independent pieces:
+- one direction where small errors grow exponentially (the saddle, rate λ)
+- an in-plane oscillation (frequency ω_p)
+- an up-and-down oscillation (frequency ν).
+
+That's "saddle × center × center".
+**Analogy.** A marble on a horse saddle: nudge it front-to-back and it wobbles back; nudge it side-to-side and it falls off. The two "center" directions are where halo and Lyapunov orbits live. The saddle direction is where the manifold "highways" come from.
+**Key equation.** `s⁴ + (2 − c)s² + (1 + c − 2c²) = 0`, giving `λ² = (c − 2 + √(9c² − 8c))/2`. At L1, λ = 2.93, so errors grow by e every 1.48 days.
+**Check yourself.** Why do halo orbits near L1 need regular station-keeping burns, while JWST-style orbits around Sun–Earth L2 need them only every few weeks? (Hint: λ in physical units depends on the system's time unit: 4.34 days for Earth–Moon, ~58 days for Sun–Earth.)

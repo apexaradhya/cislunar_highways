@@ -66,3 +66,15 @@ Running log of phase status, test numbers, and decisions. Newest phase at the bo
   All are within the grid bound of 3e-5, derived from the grid spacing h = 2e-3.
 - Decision: the bias is one-sided (found ≥ C(Lᵢ)), because the grid misses the exact minimum of 2Ω across the neck. The test asserts this direction.
 - Figure: `p4_hill_regions` (6 panels from C > C1 to C < 3).
+
+### Phase 5: Linear stability at the collinear points ✅
+- `lagrange.collinear_modes()` gives the analytic λ, ω_p, ν and the ellipse ratio k. `linear_lyapunov_state()` gives the linear seed for Phase 7.
+- Table (`docs/figures/p5_linear_table.txt`):
+
+  | Point | λ | ω_p | ν | Planar period | e-fold time |
+  |---|---|---|---|---|---|
+  | L1 | 2.932056 | 2.334386 | 2.268831 | 11.69 d | 1.48 d |
+  | L2 | 2.158674 | 1.862646 | 1.786176 | 14.65 d | 2.01 d |
+  | L3 | 0.177875 | 1.010420 | 1.005331 | 27.00 d | 24.4 d |
+
+- numpy.eig vs analytic: max error 8.9e-16 (spec: 1e-10). Saddle × center × center confirmed at all three points. Ω_xx = 1+2c, Ω_yy = 1−c, Ω_zz = −c to 1e-14.
