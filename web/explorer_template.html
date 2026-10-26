@@ -1,0 +1,826 @@
+<title>Cislunar Highways</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one full-bleed WebGL scene; floating glass instruments at the edges (story caption
+   bottom-left, telemetry top-right, explore tools bottom). Deliberately single dark theme:
+   it is a view into space, so it looks the same on any host. */
+:root {
+  color-scheme: dark;
+  --void: #04060b;          /* deep space */
+  --ink: #e8edf6;           /* starlight text */
+  --ink-dim: #8e98ad;       /* secondary text */
+  --stable: #5ec8ff;        /* stable manifolds: arriving */
+  --unstable: #ffad5c;      /* unstable manifolds: leaving */
+  --burn: #ff5c8d;          /* engine burns */
+  --panel: rgba(9, 13, 23, 0.74);
+  --line: rgba(150, 172, 214, 0.20);
+  --display: "Saira Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+html, body { height: 100%; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--void); color: var(--ink); font-family: var(--body); overflow: hidden; }
+#app { position: relative; height: 100%; }
+#scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.glass { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.top { position: absolute; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+  padding-top: 14px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); pointer-events: none; }
+.brand { pointer-events: auto; display: grid; gap: 6px; }
+.eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-dim); }
+h1 { margin: 0; font-family: var(--display); font-weight: 700; font-size: clamp(26px, 4vw, 40px); letter-spacing: 0.02em; line-height: 1; text-wrap: balance; }
+.modes { display: inline-flex; gap: 2px; padding: 3px; margin-top: 4px; width: max-content; }
+.modes button { font: 600 13px/1 var(--display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-dim); background: transparent;
+  border: 0; border-radius: 7px; padding: 8px 14px; cursor: pointer; }
+.modes button[aria-pressed="true"] { color: var(--void); background: var(--ink); }
+.modes button:focus-visible, .chip:focus-visible, .ctl:focus-visible { outline: 2px solid var(--stable); outline-offset: 2px; }
+.hud { pointer-events: auto; padding: 10px 14px; display: grid; gap: 6px; min-width: 190px; font-family: var(--mono); font-size: 12px; }
+.hud .row { display: flex; justify-content: space-between; gap: 18px; font-variant-numeric: tabular-nums; }
+.hud .k { color: var(--ink-dim); }
+.hud .v { color: var(--ink); }
+.hud .v.burn { color: var(--burn); }
+.bottom { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap;
+  padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); pointer-events: none; }
+.caption { pointer-events: auto; width: min(460px, 100%); padding: 16px 18px 14px; display: grid; gap: 8px; }
+.caption .count { font-family: var(--mono); font-size: 11px; color: var(--ink-dim); letter-spacing: 0.1em; }
+.caption h2 { margin: 0; font-family: var(--display); font-weight: 600; font-size: 24px; letter-spacing: 0.02em; text-wrap: balance; }
+.caption p { margin: 0; font-size: 14px; line-height: 1.55; color: #c9d1e0; max-width: 62ch; }
+.caption .ctls { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.ctl { font: 500 12px/1 var(--mono); color: var(--ink); background: rgba(255,255,255,0.06); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; cursor: pointer; }
+.ctl:hover, .chip:hover { background: rgba(255,255,255,0.12); }
+.dots { display: flex; gap: 5px; margin-left: auto; }
+.dots button { width: 7px; height: 7px; border-radius: 50%; border: 0; padding: 0; background: rgba(232,237,246,0.25); cursor: pointer; }
+.dots button[aria-current="true"] { background: var(--ink); }
+.explore { pointer-events: auto; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; width: 100%; }
+.tools { padding: 12px 14px; display: grid; gap: 10px; width: min(380px, 100%); }
+.tools .hint { font-size: 13px; line-height: 1.5; color: #c9d1e0; }
+.tools .hint b { color: var(--ink); font-weight: 500; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 500 12px/1 var(--mono); color: var(--ink-dim); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; cursor: pointer; }
+.chip[aria-pressed="true"] { color: var(--ink); border-color: rgba(232,237,246,0.6); }
+.chip .sw { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+.pareto { padding: 10px 12px 8px; width: min(440px, 100%); margin-left: auto; display: grid; gap: 4px; }
+.pareto .t { font-family: var(--display); font-size: 16px; font-weight: 600; letter-spacing: 0.03em; }
+.pareto .s { font-size: 12px; color: var(--ink-dim); }
+#paretoCanvas { width: 100%; height: 180px; display: block; cursor: crosshair; }
+.labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.lab { position: absolute; transform: translate(-50%, -140%); font: 500 11px/1 var(--mono); color: var(--ink); letter-spacing: 0.06em; white-space: nowrap;
+  text-shadow: 0 0 6px rgba(0,0,0,0.9); transition: opacity .4s; }
+.lab.dim { color: var(--ink-dim); }
+.note { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(6px + env(safe-area-inset-bottom, 0px)); font: 400 10px/1 var(--mono); color: var(--ink-dim); pointer-events: none; }
+.toast { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); font: 600 15px/1.2 var(--display); letter-spacing: 0.06em; color: var(--burn);
+  text-transform: uppercase; opacity: 0; transition: opacity .3s; pointer-events: none; text-shadow: 0 0 12px rgba(255,92,141,0.6); }
+.loading { position: absolute; inset: 0; display: grid; place-items: center; font: 500 13px var(--mono); color: var(--ink-dim); }
+body.record .modes, body.record .caption .ctls { display: none; }
+body.record .lab, body.record .toast { transition: none; }
+@media (max-width: 640px) {
+  .hud { min-width: 0; font-size: 11px; padding: 8px 10px; }
+  .caption h2 { font-size: 20px; }
+  .caption p { font-size: 13px; }
+  #paretoCanvas { height: 140px; }
+}
+@media (prefers-reduced-motion: reduce) { .lab, .toast { transition: none; } }
+</style>
+
+<div id="app">
+  <canvas id="scene" aria-label="3D view of the Earth-Moon system in the rotating frame"></canvas>
+  <div class="labels" id="labels"></div>
+  <div class="loading" id="loading">Loading the Earth–Moon system…</div>
+  <div class="top">
+    <div class="brand">
+      <div class="eyebrow">Earth–Moon CR3BP · rotating frame</div>
+      <h1>Cislunar Highways</h1>
+      <div class="modes glass" role="group" aria-label="Mode">
+        <button id="modeStory" aria-pressed="true">Story</button>
+        <button id="modeExplore" aria-pressed="false">Explore</button>
+      </div>
+    </div>
+    <div class="hud glass" id="hud" aria-live="polite"></div>
+  </div>
+  <div class="toast" id="toast"></div>
+  <div class="bottom">
+    <section class="caption glass" id="caption">
+      <div class="count" id="capCount"></div>
+      <h2 id="capTitle"></h2>
+      <p id="capText"></p>
+      <div class="ctls">
+        <button class="ctl" id="prev" aria-label="Previous chapter">◀</button>
+        <button class="ctl" id="play" aria-label="Pause">❚❚</button>
+        <button class="ctl" id="next" aria-label="Next chapter">▶</button>
+        <div class="dots" id="dots"></div>
+      </div>
+    </section>
+    <section class="explore" id="explore" hidden>
+      <div class="tools glass">
+        <div class="hint" id="hint"><b>Drag the glowing marker</b> around the L2 halo to pick where you join it. <b>Drag the ring</b> around L1 to change the energy. <b>Click a star</b> in the chart to fly that transfer.</div>
+        <div class="chips" id="chips"></div>
+        <div class="chips"><button class="chip" id="frameBtn" aria-pressed="false">Inertial frame</button></div>
+      </div>
+      <div class="pareto glass">
+        <div class="t">Fuel vs time: every transfer we corrected (L1 and L2 halos)</div>
+        <div class="s" id="paretoSub">Δv (m/s) against time of flight (days). Bright stars: best Δv for their flight time.</div>
+        <canvas id="paretoCanvas" aria-label="Scatter of transfer delta-v against time of flight"></canvas>
+      </div>
+    </section>
+  </div>
+  <div class="note" id="note">Earth and Moon drawn 3× true size · every path is a computed CR3BP trajectory</div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script id="cislunar-data" type="application/json">__DATA__</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { Line2 } from "three/addons/lines/Line2.js";
+import { LineMaterial } from "three/addons/lines/LineMaterial.js";
+import { LineGeometry } from "three/addons/lines/LineGeometry.js";
+
+// ---------------------------------------------------------------- data
+const DATA = JSON.parse(document.getElementById("cislunar-data").textContent);
+const f32 = (b64) => { const s = atob(b64); const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return new Float32Array(u.buffer); };
+const M = DATA.meta, MU = M.mu, DAYS = M.T_days;
+const S = 10;                 // scene units per Earth-Moon distance
+const BODY = 3;               // bodies drawn 3x true size
+const RECORD = location.hash === "#record";   // frame-stepped by a script (screenshots)
+const FILM = location.hash === "#film";       // plays in real time, chrome hidden (video capture)
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+if (RECORD || FILM) document.body.classList.add("record");
+const fmt = (x, d = 0) => x.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+
+// ---------------------------------------------------------------- renderer, scene, camera
+const canvas = document.getElementById("scene");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: RECORD });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+// Pure black: very dark non-zero clear colours quantize to a visible grey in 8-bit linear
+// render targets (software GL falls back to them), so the void is exactly zero.
+renderer.setClearColor(0x000000, 1);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(42, 1, 0.01, 2000);
+camera.up.set(0, 0, 1);
+camera.position.set(-2, -16, 9);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.target.set(4, 0, 0);
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.6, 0.35, 0.5);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+const fatMaterials = [];
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  renderer.setSize(w, h, false);
+  composer.setSize(w, h);
+  bloom.setSize(w, h);
+  camera.aspect = w / h;
+  // Story captions sit bottom-left: on wide screens shift the picture right and up so the action
+  // frames in the open space instead of behind the caption card.
+  if (w > 760) camera.setViewOffset(w, h, -0.12 * w, 0.1 * h, w, h); else camera.clearViewOffset();
+  camera.updateProjectionMatrix();
+  for (const m of fatMaterials) m.resolution.set(w, h);
+  drawPareto();
+}
+
+// ---------------------------------------------------------------- helpers
+const P = (x, y, z) => new THREE.Vector3(x * S, y * S, z * S);
+function toPositions(arr) { const out = new Float32Array(arr.length); for (let i = 0; i < arr.length; i++) out[i] = arr[i] * S; return out; }
+function thinLine(arr, color, opacity = 0.5) {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(toPositions(arr), 3));
+  const m = new THREE.LineBasicMaterial({ color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false });
+  const l = new THREE.Line(g, m);
+  l.userData.n = arr.length / 3;
+  return l;
+}
+function fatLine(arr, color, width = 2.5, opacity = 1, colors = null) {
+  const g = new LineGeometry();
+  g.setPositions(Array.from(toPositions(arr)));
+  if (colors) g.setColors(colors);
+  const m = new LineMaterial({ color: colors ? 0xffffff : color, linewidth: width, transparent: true, opacity, vertexColors: !!colors,
+    blending: THREE.AdditiveBlending, depthWrite: false, worldUnits: false });
+  m.resolution.set(canvas.clientWidth || 1, canvas.clientHeight || 1);
+  fatMaterials.push(m);
+  const l = new Line2(g, m);
+  l.computeLineDistances();
+  l.userData.n = arr.length / 3;
+  return l;
+}
+function glowTexture() {
+  const c = document.createElement("canvas"); c.width = c.height = 64;
+  const g = c.getContext("2d"); const r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.25, "rgba(255,255,255,0.55)"); r.addColorStop(1, "rgba(255,255,255,0)");
+  g.fillStyle = r; g.fillRect(0, 0, 64, 64);
+  return new THREE.CanvasTexture(c);
+}
+const GLOW = glowTexture();
+function sprite(color, size) {
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: GLOW, color, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+  s.scale.set(size, size, 1);
+  return s;
+}
+const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+const clamp01 = (x) => Math.max(0, Math.min(1, x));
+function sampleAt(arr, n, u) { // position at fraction u along an (n,3) polyline
+  const f = clamp01(u) * (n - 1); const i = Math.min(n - 2, Math.floor(f)); const a = f - i;
+  return [arr[3 * i] * (1 - a) + arr[3 * i + 3] * a, arr[3 * i + 1] * (1 - a) + arr[3 * i + 4] * a, arr[3 * i + 2] * (1 - a) + arr[3 * i + 5] * a];
+}
+function sampleTime(t, xyz, tq) { // position at time tq on a time-tagged path
+  let lo = 0, hi = t.length - 1;
+  if (tq <= t[0]) return [xyz[0], xyz[1], xyz[2]];
+  if (tq >= t[hi]) return [xyz[3 * hi], xyz[3 * hi + 1], xyz[3 * hi + 2]];
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (t[m] <= tq) lo = m; else hi = m; }
+  const a = (tq - t[lo]) / (t[hi] - t[lo]);
+  return [0, 1, 2].map((k) => xyz[3 * lo + k] * (1 - a) + xyz[3 * hi + k] * a);
+}
+
+// ---------------------------------------------------------------- stars
+{
+  const n = 5000, pos = new Float32Array(3 * n), col = new Float32Array(3 * n);
+  let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (let i = 0; i < n; i++) {
+    const u = rnd() * 2 - 1, th = rnd() * Math.PI * 2, r = 600;
+    const s = Math.sqrt(1 - u * u);
+    pos.set([r * s * Math.cos(th), r * s * Math.sin(th), r * u], 3 * i);
+    const warm = rnd(); const b = 0.18 + 0.5 * Math.pow(rnd(), 4);
+    col.set([b * (0.85 + 0.15 * warm), b * 0.9, b * (1.0 - 0.15 * warm)], 3 * i);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  scene.add(new THREE.Points(g, new THREE.PointsMaterial({ size: 1.3, sizeAttenuation: false, vertexColors: true, transparent: true, depthWrite: false })));
+}
+
+// ---------------------------------------------------------------- Earth and Moon (procedural shading)
+const SUN = new THREE.Vector3(0.9, -0.35, 0.25).normalize();
+const NOISE = `
+float h(vec3 p){ p = fract(p * 0.3183099 + .1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+float n3(vec3 x){ vec3 i = floor(x); vec3 f = fract(x); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(h(i), h(i + vec3(1,0,0)), f.x), mix(h(i + vec3(0,1,0)), h(i + vec3(1,1,0)), f.x), f.y),
+             mix(mix(h(i + vec3(0,0,1)), h(i + vec3(1,0,1)), f.x), mix(h(i + vec3(0,1,1)), h(i + vec3(1,1,1)), f.x), f.y), f.z); }
+float fbm(vec3 p){ float v = 0.0, a = 0.5; for (int i = 0; i < 5; i++) { v += a * n3(p); p *= 2.03; a *= 0.5; } return v; }`;
+function bodyMaterial(kind) {
+  return new THREE.ShaderMaterial({
+    uniforms: { sun: { value: SUN } },
+    vertexShader: `varying vec3 vN; varying vec3 vP; void main(){ vN = normalize(normal); vP = position;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `uniform vec3 sun; varying vec3 vN; varying vec3 vP; ${NOISE}
+      void main(){ vec3 n = normalize(vN); float d = dot(n, sun); float day = smoothstep(-0.12, 0.25, d);
+      ${kind === "earth" ? `
+        float land = smoothstep(0.52, 0.56, fbm(n * 2.6 + 3.1));
+        float ice = smoothstep(0.82, 0.9, abs(n.z));
+        vec3 ocean = mix(vec3(0.02, 0.10, 0.28), vec3(0.05, 0.25, 0.55), fbm(n * 8.0));
+        vec3 ground = mix(vec3(0.16, 0.30, 0.12), vec3(0.45, 0.38, 0.22), fbm(n * 6.0 + 9.0));
+        vec3 c = mix(ocean, ground, land); c = mix(c, vec3(0.92), ice);
+        float cloud = smoothstep(0.55, 0.75, fbm(n * 4.0 + 20.0)); c = mix(c, vec3(1.0), cloud * 0.55);
+        vec3 night = vec3(0.01, 0.02, 0.05) + vec3(1.0, 0.75, 0.4) * land * (1.0 - ice) * smoothstep(0.62, 0.7, fbm(n * 30.0)) * 0.35;
+        gl_FragColor = vec4(mix(night, c * (0.25 + 1.1 * max(d, 0.0)), day), 1.0);` : `
+        float m = fbm(n * 5.0); float mare = smoothstep(0.5, 0.58, fbm(n * 1.8 + 4.0));
+        float crater = smoothstep(0.7, 0.78, fbm(n * 18.0));
+        vec3 c = mix(vec3(0.62, 0.60, 0.57), vec3(0.32, 0.31, 0.30), mare) * (0.8 + 0.4 * m) + crater * 0.08;
+        gl_FragColor = vec4(c * (0.04 + 1.05 * max(d, 0.0)) * (0.3 + 0.7 * day), 1.0);`}
+      }`,
+  });
+}
+const earth = new THREE.Mesh(new THREE.SphereGeometry(M.R_E * S * BODY, 96, 64), bodyMaterial("earth"));
+earth.position.copy(P(-MU, 0, 0));
+scene.add(earth);
+const atmo = new THREE.Mesh(new THREE.SphereGeometry(M.R_E * S * BODY * 1.12, 64, 48), new THREE.ShaderMaterial({
+  uniforms: { sun: { value: SUN } }, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.BackSide,
+  vertexShader: `varying vec3 vN; varying vec3 vV; void main(){ vN = normalize(normalMatrix * normal); vec4 mv = modelViewMatrix * vec4(position,1.0); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`,
+  fragmentShader: `varying vec3 vN; varying vec3 vV; void main(){ float f = pow(1.0 - abs(dot(vN, vV)), 2.5); gl_FragColor = vec4(vec3(0.35, 0.65, 1.0) * f * 1.4, f); }`,
+}));
+atmo.position.copy(earth.position);
+scene.add(atmo);
+const moon = new THREE.Mesh(new THREE.SphereGeometry(M.R_M * S * BODY, 64, 48), bodyMaterial("moon"));
+moon.position.copy(P(1 - MU, 0, 0));
+scene.add(moon);
+
+// ---------------------------------------------------------------- labels (HTML, projected each frame)
+const labelLayer = document.getElementById("labels");
+const labels = [];
+function label(text, posFn, cls = "") { const el = document.createElement("div"); el.className = "lab " + cls; el.textContent = text; labelLayer.appendChild(el); const L = { el, posFn, on: false }; labels.push(L); return L; }
+const tmpV = new THREE.Vector3();
+function updateLabels() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  for (const L of labels) {
+    if (!L.on) { L.el.style.opacity = 0; continue; }
+    tmpV.copy(L.posFn()).project(camera);
+    const vis = tmpV.z < 1 && Math.abs(tmpV.x) < 1.05 && Math.abs(tmpV.y) < 1.05;
+    L.el.style.opacity = vis ? 1 : 0;
+    L.el.style.left = ((tmpV.x + 1) / 2) * w + "px";
+    L.el.style.top = ((1 - tmpV.y) / 2) * h + "px";
+  }
+}
+const labEarth = label("EARTH", () => earth.position.clone().add(new THREE.Vector3(0, 0, M.R_E * S * BODY * 1.6)), "dim");
+const labMoon = label("MOON", () => moon.position.clone().add(new THREE.Vector3(0, 0, M.R_M * S * BODY * 2.2)), "dim");
+
+// ---------------------------------------------------------------- Lagrange points
+const lagrange = new THREE.Group(); scene.add(lagrange);
+const lagLabels = [];
+for (const [name, r] of Object.entries(M.lagrange)) {
+  const s = sprite(name <= "L3" ? 0xffad5c : 0x6ee7b7, 0.5);
+  s.position.copy(P(r[0], r[1], r[2]));
+  s.userData.phase = Math.random() * 6;
+  lagrange.add(s);
+  lagLabels.push(label(name, () => s.position));
+}
+
+// ---------------------------------------------------------------- Hill walls (zero-velocity curves)
+const hillGroup = new THREE.Group(); scene.add(hillGroup);
+const hillLevels = DATA.hill.map((lv) => {
+  const g = new THREE.Group();
+  for (const sg of lv.segs) {
+    const a = f32(sg); const arr = new Float32Array((a.length / 2) * 3);
+    for (let i = 0; i < a.length / 2; i++) { arr[3 * i] = a[2 * i]; arr[3 * i + 1] = a[2 * i + 1]; arr[3 * i + 2] = 0; }
+    g.add(thinLine(arr, 0xb8c4ff, 0.85));
+  }
+  g.visible = false; hillGroup.add(g);
+  return { C: lv.C, g };
+});
+let hillIndex = 0;
+function showHill(i) { hillLevels.forEach((l, k) => (l.g.visible = k === i)); hillIndex = i; }
+
+// ---------------------------------------------------------------- halo families
+const famGroup = new THREE.Group(); scene.add(famGroup);
+const famLines = [];
+for (const key of ["L1", "L2"]) {
+  const orbs = DATA.halo_families[key];
+  orbs.forEach((o, i) => {
+    const t = i / (orbs.length - 1);
+    const c = new THREE.Color().setHSL(0.58 - 0.08 * t, 0.7, 0.62 - 0.22 * t);
+    const l = thinLine(f32(o.xyz), c, 0.55); famGroup.add(l); famLines.push(l);
+    const m = l.clone(); m.scale.z = -1; m.material = l.material.clone(); m.material.opacity = 0.18; famGroup.add(m); famLines.push(m); // southern mirror
+  });
+}
+
+// ---------------------------------------------------------------- manifold tubes
+const tubeGroup = new THREE.Group(); scene.add(tubeGroup);
+const tubeStrands = []; // {line, arr, n, kind}
+const haloLines = {};
+for (const key of ["L1", "L2"]) {
+  const T = DATA.tubes[key];
+  const h = fatLine(f32(T.orbit), 0xd9dcff, 2.0, 0.7); haloLines[key] = h; scene.add(h);
+  for (const [bk, strands] of Object.entries(T.branches)) {
+    const kind = bk[0];
+    for (const s of strands) {
+      const arr = f32(s);
+      const l = thinLine(arr, kind === "s" ? 0x5ec8ff : 0xffad5c, bk[1] === "-" ? 0.24 : 0.15);
+      tubeGroup.add(l);
+      tubeStrands.push({ line: l, arr, n: arr.length / 3, kind });
+    }
+  }
+}
+function setTubeProgress(p) {
+  for (const s of tubeStrands) {
+    const k = Math.max(2, Math.floor(s.n * p));
+    // stable strands are stored in the direction of motion (ending at the halo): grow from the halo end
+    if (s.kind === "s") s.line.geometry.setDrawRange(s.n - k, k); else s.line.geometry.setDrawRange(0, k);
+  }
+}
+// particles flowing along the tubes
+const flow = (() => {
+  const n = tubeStrands.length * 2, pos = new Float32Array(3 * n), col = new Float32Array(3 * n);
+  const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  tubeStrands.forEach((s, i) => { const c = new THREE.Color(s.kind === "s" ? 0x9fdcff : 0xffd09a); for (const j of [0, 1]) col.set([c.r, c.g, c.b], 3 * (2 * i + j)); });
+  const pts = new THREE.Points(g, new THREE.PointsMaterial({ size: 0.16, map: GLOW, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+  scene.add(pts);
+  return { pts, pos, g };
+})();
+function updateFlow(time, p) {
+  tubeStrands.forEach((s, i) => {
+    for (const j of [0, 1]) {
+      const u0 = ((time * 0.05 + i * 0.137 + j * 0.5) % 1);
+      const u = s.kind === "s" ? 1 - p + u0 * p : u0 * p;
+      const q = sampleAt(s.arr, s.n, u);
+      flow.pos.set([q[0] * S, q[1] * S, q[2] * S], 3 * (2 * i + j));
+    }
+  });
+  flow.g.attributes.position.needsUpdate = true;
+}
+
+// ---------------------------------------------------------------- crafts with comet trails
+function makeCraft(color) {
+  const head = sprite(color, 0.55);
+  const N = 90, pos = new Float32Array(3 * N), col = new Float32Array(3 * N);
+  const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  const trail = new THREE.Line(g, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+  const c = new THREE.Color(color);
+  const grp = new THREE.Group(); grp.add(head, trail); scene.add(grp);
+  let filled = 0;
+  return {
+    grp, head,
+    reset() { filled = 0; },
+    set(x, y, z) {
+      pos.copyWithin(3, 0, 3 * (N - 1)); pos.set([x * S, y * S, z * S], 0); filled = Math.min(N, filled + 1);
+      for (let i = 0; i < N; i++) { const a = i < filled ? Math.pow(1 - i / N, 1.6) : 0; col.set([c.r * a, c.g * a, c.b * a], 3 * i); }
+      for (let i = filled; i < N; i++) pos.set([x * S, y * S, z * S], 3 * i);
+      g.attributes.position.needsUpdate = true; g.attributes.color.needsUpdate = true;
+      head.position.set(x * S, y * S, z * S);
+    },
+  };
+}
+
+// ---------------------------------------------------------------- transfers (rotating <-> inertial)
+const TR = {};
+for (const [name, d] of Object.entries(DATA.transfers)) {
+  const t = f32(d.t), xyz = f32(d.xyz);
+  TR[name] = { ...d, t, xyz, n: t.length };
+}
+function inertialOf(xyz, t, s) { // blend rotating (Earth-relative) -> Earth-centred inertial, frame aligned at the patch time
+  const out = new Float32Array(xyz.length);
+  for (let i = 0; i < t.length; i++) {
+    const rx = xyz[3 * i] + MU, ry = xyz[3 * i + 1], rz = xyz[3 * i + 2];
+    const th = t[i] * s, c = Math.cos(th), sn = Math.sin(th);
+    out[3 * i] = c * rx - sn * ry - MU; out[3 * i + 1] = sn * rx + c * ry; out[3 * i + 2] = rz;
+  }
+  return out;
+}
+const trLines = {};
+const trGroup = new THREE.Group(); scene.add(trGroup);
+function buildTransferLines(s) {
+  for (const l of Object.values(trLines)) { trGroup.remove(l); l.geometry.dispose(); }
+  for (const [name, d] of Object.entries(TR)) {
+    const xyz = s > 0 ? inertialOf(d.xyz, d.t, s) : d.xyz;
+    const k = d.t.findIndex((x) => x >= 0);
+    const n = d.t.length;
+    const colors = []; const a = new THREE.Color(name === "direct" ? 0xff7a59 : 0x5ec8ff), b = new THREE.Color(name === "direct" ? 0xffb38a : 0x9fe7ff);
+    for (let i = 0; i < n; i++) { const c = i < k ? a : b; const f = i < k ? 1 : 0.65; colors.push(c.r * f, c.g * f, c.b * f); }
+    trLines[name] = fatLine(xyz, 0xffffff, name === "manifold" ? 2.0 : 2.4, 0.9, colors);
+    trGroup.add(trLines[name]);
+  }
+}
+buildTransferLines(0);
+const crafts = { direct: makeCraft(0xff8a63), manifold: makeCraft(0x8fe3ff) };
+
+// ---------------------------------------------------------------- heteroclinic, NRHO, fan
+const het = fatLine(f32(DATA.heteroclinic.xyz), 0xffffff, 2.2, 0.8, (() => {
+  const n = f32(DATA.heteroclinic.xyz).length / 3, c = []; const a = new THREE.Color(0xffad5c), b = new THREE.Color(0x5ec8ff);
+  for (let i = 0; i < n; i++) { const x = new THREE.Color().lerpColors(a, b, i / (n - 1)); c.push(x.r, x.g, x.b); } return c; })());
+scene.add(het);
+const hetArr = f32(DATA.heteroclinic.xyz), hetN = hetArr.length / 3;
+const hetCraft = makeCraft(0xffffff);
+const nrho = fatLine(f32(DATA.nrho.xyz), 0xc9b8ff, 2.8, 1.0); scene.add(nrho);
+const nrhoArr = f32(DATA.nrho.xyz), nrhoCraft = makeCraft(0xc9b8ff);
+const FAN = DATA.fan, fanXYZ = f32(FAN.xyz), fanT = f32(FAN.t);
+const fanPts = (() => {
+  const n = FAN.n, pos = new Float32Array(3 * n), col = new Float32Array(3 * n);
+  for (let i = 0; i < n; i++) { const c = new THREE.Color().setHSL(0.55 + 0.4 * (i / n), 0.8, 0.7); col.set([c.r, c.g, c.b], 3 * i); }
+  const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  const p = new THREE.Points(g, new THREE.PointsMaterial({ size: 0.22, map: GLOW, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+  scene.add(p); return { p, pos, g };
+})();
+function setFan(frame) {
+  const f = Math.max(0, Math.min(FAN.frames - 1.001, frame)), i = Math.floor(f), a = f - i, n = FAN.n;
+  for (let k = 0; k < n; k++) for (let c = 0; c < 3; c++) {
+    const v0 = fanXYZ[(i * n + k) * 3 + c], v1 = fanXYZ[((i + 1) * n + k) * 3 + c];
+    fanPts.pos[3 * k + c] = (v0 * (1 - a) + v1 * a) * S;
+  }
+  fanPts.g.attributes.position.needsUpdate = true;
+  return fanT[i] * (1 - a) + fanT[i + 1] * a;
+}
+function fanSpreadKm(frame) {
+  const i = Math.max(0, Math.min(FAN.frames - 1, Math.round(frame))), n = FAN.n; let s = 0;
+  const ref = f32(FAN.ref);
+  for (let k = 0; k < n; k++) { let d2 = 0; for (let c = 0; c < 3; c++) { const d = fanXYZ[(i * n + k) * 3 + c] - ref[3 * i + c]; d2 += d * d; } s += d2; }
+  return Math.sqrt(s / n) * M.L_km;
+}
+
+// ---------------------------------------------------------------- explore: strand picker, energy ring, Pareto flights
+const PK = DATA.picker, pkHalo = f32(PK.halo_points), pkN = PK.strands.length;
+const pkStrands = PK.strands.map(f32);
+let pkIndex = Math.floor(pkN * 0.62);
+const pkMarker = sprite(0xffffff, 0.9); scene.add(pkMarker);
+const pkHit = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 8), new THREE.MeshBasicMaterial({ visible: false })); scene.add(pkHit);
+let pkLine = null; const pkCraft = makeCraft(0x5ec8ff);
+function setPicker(i) {
+  pkIndex = (i + pkN) % pkN;
+  const x = pkHalo[3 * pkIndex], y = pkHalo[3 * pkIndex + 1], z = pkHalo[3 * pkIndex + 2];
+  pkMarker.position.set(x * S, y * S, z * S); pkHit.position.copy(pkMarker.position);
+  if (pkLine) { scene.remove(pkLine); pkLine.geometry.dispose(); }
+  pkLine = fatLine(pkStrands[pkIndex], 0x5ec8ff, 3.2, 1.0); scene.add(pkLine);
+  pkCraft.reset();
+}
+const L1 = M.lagrange.L1;
+const ring = new THREE.Mesh(new THREE.TorusGeometry(1.15, 0.035, 12, 96), new THREE.MeshBasicMaterial({ color: 0xffad5c, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending }));
+ring.position.copy(P(L1[0], L1[1], L1[2])); scene.add(ring);
+const ringKnob = sprite(0xffd7a8, 0.75); scene.add(ringKnob);
+const ringHit = new THREE.Mesh(new THREE.TorusGeometry(1.15, 0.22, 8, 64), new THREE.MeshBasicMaterial({ visible: false })); ringHit.position.copy(ring.position); scene.add(ringHit);
+function setRingIndex(i) {
+  i = Math.max(0, Math.min(hillLevels.length - 1, i)); showHill(i);
+  const ang = -Math.PI / 2 + (i / (hillLevels.length - 1)) * Math.PI * 2 * 0.92;
+  ringKnob.position.set(ring.position.x + 1.15 * Math.cos(ang), ring.position.y + 1.15 * Math.sin(ang), ring.position.z);
+}
+let flight = null; // explore-mode Pareto flight {leg, arc, orbit lines, craft, path}
+const flightCraft = makeCraft(0xffffff);
+function flyCandidate(c) {
+  if (flight) for (const o of flight.objs) { scene.remove(o); o.geometry.dispose(); }
+  const leg = f32(c.leg), arc = f32(c.arc), orb = f32(c.orbit);
+  const objs = [fatLine(leg, c.kind === "manifold" ? 0x5ec8ff : 0xff7a59, 2.6, 1), fatLine(arc, c.kind === "manifold" ? 0x9fe7ff : 0xffb38a, 2.0, 0.8), fatLine(orb, 0xf4f1ff, 2.2, 0.9)];
+  objs.forEach((o) => scene.add(o));
+  const path = new Float32Array(leg.length + arc.length); path.set(leg); path.set(arc, leg.length);
+  flight = { objs, path, n: path.length / 3, legN: leg.length / 3, c, t0: clock };
+  flightCraft.reset();
+}
+
+// ---------------------------------------------------------------- HUD and toast
+const hud = document.getElementById("hud");
+function setHUD(rows) { hud.innerHTML = rows.map(([k, v, cls]) => `<div class="row"><span class="k">${k}</span><span class="v ${cls || ""}">${v}</span></div>`).join(""); }
+const toastEl = document.getElementById("toast");
+let toastUntil = 0;
+function toast(text) { toastEl.textContent = text; toastEl.style.opacity = 1; toastUntil = clock + 1.8; }
+
+// ---------------------------------------------------------------- camera moves
+let camFrom = null;
+function flyTo(pos, target, dur = 2.6) {
+  camFrom = { p0: camera.position.clone(), t0: controls.target.clone(), p1: new THREE.Vector3(...pos), t1: new THREE.Vector3(...target), start: clock, dur: REDUCED ? 0.01 : dur };
+}
+function updateCamera() {
+  if (!camFrom) return;
+  const u = ease(clamp01((clock - camFrom.start) / camFrom.dur));
+  camera.position.lerpVectors(camFrom.p0, camFrom.p1, u);
+  controls.target.lerpVectors(camFrom.t0, camFrom.t1, u);
+  if (u >= 1) camFrom = null;
+}
+
+// ---------------------------------------------------------------- visibility
+const layers = {
+  lagrange: [lagrange], hill: [hillGroup], families: [famGroup], tubes: [tubeGroup, flow.pts], halos: [haloLines.L1, haloLines.L2],
+  transfers: [trGroup, crafts.direct.grp, crafts.manifold.grp], het: [het, hetCraft.grp], nrho: [nrho, nrhoCraft.grp], fan: [fanPts.p],
+  picker: [pkMarker, pkCraft.grp, ring, ringKnob], flight: [flightCraft.grp],
+};
+function show(on) {
+  for (const [k, objs] of Object.entries(layers)) for (const o of objs) o.visible = on.includes(k);
+  if (pkLine) pkLine.visible = on.includes("picker");
+  if (flight) for (const o of flight.objs) o.visible = on.includes("flight");
+  for (const L of lagLabels) L.on = on.includes("lagrange");
+}
+
+// ---------------------------------------------------------------- story
+const TRm = TR.manifold, TRd = TR.direct, C = M.C_points;
+const CH = [
+  { title: "Riding along with the Moon", dur: 9,
+    text: `We spin our point of view with the Moon. In this rotating frame Earth and Moon sit still, ${fmt(M.L_km)} km apart, and the frame turns once every ${fmt(2 * Math.PI * DAYS, 1)} days. Everything else moves through their combined gravity.`,
+    cam: [[-3, -17, 8], [4.5, 0, 0]], on: [] },
+  { title: "Five places to hover", dur: 9,
+    text: `Where Earth's pull, the Moon's pull and the frame's spin cancel, a spacecraft could hover. L1 is ${fmt((1 - MU - M.lagrange.L1[0]) * M.L_km)} km in front of the Moon and L2 is ${fmt((M.lagrange.L2[0] - 1 + MU) * M.L_km)} km behind it. The three on the Earth–Moon line are unstable.`,
+    cam: [[2, -15, 13], [2, 0, 0]], on: ["lagrange"] },
+  { title: "Walls made of energy", dur: 12,
+    text: `A spacecraft's Jacobi constant C fixes where it may go: lower C, more energy, smaller forbidden zone. Watch the walls retreat. A gap opens at L1 when C drops below ${C.L1.toFixed(4)}, then at L2 below ${C.L2.toFixed(4)}.`,
+    cam: [[4, -2, 24], [3, 0, 0]], on: ["lagrange", "hill"] },
+  { title: "Halo orbits", dur: 10,
+    text: `Around L1 and L2 sit families of looping three-dimensional orbits. We traced ${DATA.halo_families.L1.length * 3}+ around L1 and ${DATA.halo_families.L2.length * 3}+ around L2 by differential correction; each closes on itself to about a billionth of the Earth–Moon distance.`,
+    cam: [[7, -7, 4], [9.9, 0, 0]], on: ["lagrange", "families"] },
+  { title: "Gravitational highways", dur: 13,
+    text: `Each halo is unstable: a nudge grows ${fmt(DATA.tubes.L2.lambda_u)}× per lap. Blue tubes are paths that fall onto the halo by themselves; amber tubes are paths that leave it. With the engine off, a spacecraft can ride them.`,
+    cam: [[6, -12, 9], [9.6, 0, 0]], on: ["tubes", "halos"] },
+  { title: "A free ride from L1 to L2", dur: 11,
+    text: `Where a tube leaving L1 crosses a tube arriving at L2, one path belongs to both. This one leaves L1, loops around the Moon and settles at L2 after ${fmt(DATA.heteroclinic.days, 1)} days, with no engine burn at all.`,
+    cam: [[10, -6, 7], [9.9, 0, 0]], on: ["het", "lagrange"] },
+  { title: "Two ways to the same orbit", dur: 20,
+    text: `Both start with a ~3.1 km/s burn in low Earth orbit. The direct route reaches the L2 halo in ${fmt(TRd.tof_days, 1)} days and brakes hard. The low-energy route matches a highway first, then coasts for ${fmt(TRm.arc_days, 0)} days. Δv: ${fmt(TRd.total * 1000)} vs ${fmt(TRm.total * 1000)} m/s.`,
+    cam: [[2, -20, 14], [3.5, 0, 0]], on: ["transfers", "halos"] },
+  { title: "Where prediction ends", dur: 13,
+    text: `${FAN.n} spacecraft start on the halo, each off by about 1 m and 1 cm/s. Theory predicted they would be 1,000 km apart after ${fmt(FAN.predict.forecast[2].predicted_days, 1)} days. The simulation says ${fmt(FAN.predict.forecast[2].measured_days, 1)}.`,
+    cam: [[9, -12, 10], [10.5, -0.8, 0]], on: ["fan", "halos"] },
+  { title: "Gateway's orbit", dur: 11,
+    text: `Follow the L2 halos toward the Moon and they stretch into near-rectilinear orbits. Our 9:2 version repeats every ${fmt(DATA.nrho.period_days, 3)} days, swings to ${fmt(DATA.nrho.perilune_radius_km)} km from the Moon's centre and out to ${fmt(DATA.nrho.apolune_radius_km)} km.`,
+    cam: [[11.5, -3.5, 0.6], [10.1, 0, -0.35]], on: ["nrho"] },
+];
+const noteEl = document.getElementById("note"), NOTE = noteEl.textContent;
+const capCount = document.getElementById("capCount"), capTitle = document.getElementById("capTitle"), capText = document.getElementById("capText"), dots = document.getElementById("dots");
+CH.forEach((c, i) => { const b = document.createElement("button"); b.setAttribute("aria-label", `Chapter ${i + 1}: ${c.title}`); b.onclick = () => goChapter(i); dots.appendChild(b); });
+let chapter = 0, chStart = 0, playing = true, mode = "story";
+function goChapter(i) {
+  chapter = (i + CH.length) % CH.length; chStart = clock;
+  const c = CH[chapter];
+  capCount.textContent = `CHAPTER ${chapter + 1} / ${CH.length}`; capTitle.textContent = c.title; capText.textContent = c.text;
+  [...dots.children].forEach((d, k) => d.setAttribute("aria-current", k === chapter ? "true" : "false"));
+  show(c.on); flyTo(...c.cam);
+  // Near-rectilinear orbits pass 1,512 km above the surface: draw the Moon at true size there.
+  const trueMoon = c.on.includes("nrho");
+  moon.scale.setScalar(trueMoon ? 1 / BODY : 1);
+  noteEl.textContent = trueMoon ? "Moon drawn at true size in this view · every path is a computed CR3BP trajectory" : NOTE;
+  labEarth.on = labMoon.on = true;
+  if (c.on.includes("transfers")) { crafts.direct.reset(); crafts.manifold.reset(); tally = { d: 0, m: 0 }; }
+  if (c.on.includes("het")) hetCraft.reset();
+  if (c.on.includes("nrho")) nrhoCraft.reset();
+}
+let tally = { d: 0, m: 0 };
+function storyFrame() {
+  const c = CH[chapter], e = clock - chStart, u = clamp01(e / c.dur);
+  if (chapter === 0) setHUD([["frame", "rotating"], ["Earth–Moon", `${fmt(M.L_km)} km`], ["one turn", `${fmt(2 * Math.PI * DAYS, 1)} d`]]);
+  if (chapter === 1) {
+    lagrange.children.forEach((s, k) => { const a = clamp01(e * 0.8 - k * 0.35); const p = 0.5 + 0.12 * Math.sin(clock * 3 + s.userData.phase); s.scale.setScalar(a * p); });
+    setHUD([["L1 → Moon", `${fmt((1 - MU - M.lagrange.L1[0]) * M.L_km)} km`], ["L2 → Moon", `${fmt((M.lagrange.L2[0] - 1 + MU) * M.L_km)} km`], ["stable", "L4, L5"]]);
+  }
+  if (chapter === 2) {
+    const i = Math.min(hillLevels.length - 1, Math.floor(ease(u) * hillLevels.length)); showHill(i);
+    const Cv = hillLevels[i].C;
+    const st = Cv > C.L1 ? "closed" : Cv > C.L2 ? "L1 open" : Cv > C.L3 ? "L1 + L2 open" : "L1, L2, L3 open";
+    setHUD([["C", Cv.toFixed(4)], ["necks", st], ["C(L1)", C.L1.toFixed(4)], ["C(L2)", C.L2.toFixed(4)]]);
+  }
+  if (chapter === 3) {
+    famLines.forEach((l, k) => { l.geometry.setDrawRange(0, Math.floor(l.userData.n * clamp01(e * 0.35 - (k % 40) * 0.02))); });
+    setHUD([["L1 halos", `${DATA.halo_families.L1.length * 3}`], ["L2 halos", `${DATA.halo_families.L2.length * 3}`], ["periods", "6.0–14.8 d"]]);
+  }
+  if (chapter === 4) {
+    const p = ease(clamp01(e / 7)); setTubeProgress(p); updateFlow(clock, Math.max(0.05, p));
+    setHUD([["growth per lap", `${fmt(DATA.tubes.L2.lambda_u)}×`], ["blue", "arriving"], ["amber", "leaving"]]);
+  }
+  if (chapter === 5) {
+    const q = sampleAt(hetArr, hetN, clamp01(e / (c.dur - 1.5))); hetCraft.set(...q);
+    setHUD([["Δv", "0 m/s"], ["flight", `${fmt(DATA.heteroclinic.days, 1)} d`], ["C", "3.1700"]]);
+  }
+  if (chapter === 6) {
+    // shared mission clock: days since leaving LEO; the long manifold coast is played faster after day 8
+    const dayD = TRd.tof_days, dayM = TRm.tof_days;
+    const sec = e, days = sec < 8 ? sec * 1.2 : 9.6 + (sec - 8) * ((dayM - 9.6) / (c.dur - 10));
+    const dd = Math.min(days, dayD + 6), dm = Math.min(days, dayM);
+    const tdq = TRd.t[0] + dd / DAYS, tmq = TRm.t[0] + dm / DAYS;
+    crafts.direct.set(...sampleTime(TRd.t, TRd.xyz, tdq)); crafts.manifold.set(...sampleTime(TRm.t, TRm.xyz, tmq));
+    const d1 = e > 0.2 ? TRd.dv1 : 0, d2 = tdq >= 0 ? TRd.dv2 : 0, m1 = e > 0.2 ? TRm.dv1 : 0, m2 = tmq >= 0 ? TRm.dv2 : 0;
+    if (d2 && !tally.d) { tally.d = 1; toast(`Direct: brake ${fmt(TRd.dv2 * 1000)} m/s`); }
+    if (m2 && !tally.m) { tally.m = 1; toast(`Low-energy: join the highway, ${fmt(TRm.dv2 * 1000)} m/s`); }
+    setHUD([["mission day", fmt(Math.min(days, dayM), 1)], ["direct Δv", `${fmt((d1 + d2) * 1000)} m/s`, d2 ? "burn" : ""], ["low-energy Δv", `${fmt((m1 + m2) * 1000)} m/s`, m2 ? "burn" : ""], ["saved", m2 ? `${fmt((TRd.total - TRm.total) * 1000)} m/s` : "…"]]);
+  }
+  if (chapter === 7) {
+    const frame = clamp01(e / (c.dur - 1)) * (FAN.frames - 1) * 0.72; const t = setFan(frame);
+    setHUD([["day", fmt(t * DAYS, 1)], ["spread", `${fmt(fanSpreadKm(frame))} km`], ["start error", "1 m · 1 cm/s"]]);
+  }
+  if (chapter === 8) {
+    const q = sampleAt(nrhoArr, nrhoArr.length / 3, (e / 5.5) % 1); nrhoCraft.set(...q);
+    setHUD([["period", `${fmt(DATA.nrho.period_days, 3)} d`], ["perilune", `${fmt(DATA.nrho.perilune_altitude_km)} km alt`], ["apolune", `${fmt(DATA.nrho.apolune_radius_km)} km`], ["resonance", "9 : 2"]]);
+  }
+  if (playing && e > c.dur && !((RECORD || FILM) && chapter === CH.length - 1)) goChapter(chapter + 1);
+}
+
+// ---------------------------------------------------------------- explore
+const chipsEl = document.getElementById("chips");
+const EX_LAYERS = [["tubes", "Highways", "#5ec8ff"], ["families", "Halo families", "#8fb7ff"], ["hill", "Energy walls", "#b8c4ff"], ["lagrange", "Lagrange points", "#ffad5c"], ["nrho", "NRHO", "#c9b8ff"], ["transfers", "Two transfers", "#ff7a59"]];
+const exOn = new Set(["picker", "halos", "lagrange", "hill", "flight"]);
+for (const [k, lab, col] of EX_LAYERS) {
+  const b = document.createElement("button"); b.className = "chip"; b.innerHTML = `<span class="sw" style="background:${col}"></span>${lab}`;
+  b.setAttribute("aria-pressed", exOn.has(k) ? "true" : "false");
+  b.onclick = () => { exOn.has(k) ? exOn.delete(k) : exOn.add(k); b.setAttribute("aria-pressed", exOn.has(k) ? "true" : "false"); applyExplore(); };
+  chipsEl.appendChild(b);
+}
+let frameS = 0, frameTarget = 0;
+document.getElementById("frameBtn").onclick = (ev) => { frameTarget = frameTarget ? 0 : 1; ev.currentTarget.setAttribute("aria-pressed", frameTarget ? "true" : "false"); if (frameTarget) { exOn.add("transfers"); applyExplore(); } };
+function applyExplore() { show([...exOn]); moon.scale.setScalar(1); noteEl.textContent = NOTE; setTubeProgress(1); famLines.forEach((l) => l.geometry.setDrawRange(0, Infinity)); lagrange.children.forEach((s) => s.scale.setScalar(0.5)); }
+function exploreFrame() {
+  updateFlow(clock, 1);
+  const n = pkStrands[pkIndex].length / 3;
+  pkCraft.set(...sampleAt(pkStrands[pkIndex], n, ((clock - 0) / 9) % 1));
+  const Cv = hillLevels[hillIndex].C, st = Cv > C.L1 ? "both necks closed" : Cv > C.L2 ? "L1 neck open" : Cv > C.L3 ? "L1 + L2 open" : "L1, L2, L3 open";
+  if (frameS !== frameTarget) {
+    frameS += Math.sign(frameTarget - frameS) * Math.min(Math.abs(frameTarget - frameS), 0.02);
+    buildTransferLines(ease(frameS));
+    for (const k of ["tubes", "families", "hill", "halos", "picker", "lagrange", "nrho"]) for (const o of layers[k]) if (exOn.has(k) && frameS > 0.5) o.visible = false;
+    if (frameS < 0.5) applyExplore();
+  }
+  if (flight) {
+    const u = clamp01((clock - flight.t0) / 8); flightCraft.set(...sampleAt(flight.path, flight.n, u));
+  }
+  const fc = flight ? flight.c : null;
+  setHUD([
+    ["join halo at", `${Math.round(PK.phases[pkIndex] * 360)}° phase`],
+    ["coast on highway", `${fmt(PK.days, 0)} d shown`],
+    ["energy C", `${Cv.toFixed(4)}`], ["", st],
+    ...(fc ? [["picked transfer", `${fmt(fc.total * 1000)} m/s`, "burn"], ["", `${fmt(fc.tof_days, 1)} d · L${fc.L ?? ""} halo`]] : []),
+    ["frame", frameS > 0.5 ? "inertial" : "rotating"],
+  ]);
+}
+
+// pointer interaction: drag picker marker / energy ring; click Pareto stars
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+let drag = null;
+function pickAt(ev) { const r = canvas.getBoundingClientRect(); ndc.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, camera); }
+canvas.addEventListener("pointerdown", (ev) => {
+  if (mode !== "explore") return;
+  pickAt(ev);
+  if (ray.intersectObject(pkHit).length) drag = "picker";
+  else if (ray.intersectObject(ringHit).length) drag = "ring";
+  if (drag) { controls.enabled = false; canvas.setPointerCapture(ev.pointerId); }
+});
+canvas.addEventListener("pointermove", (ev) => {
+  if (!drag) return;
+  const r = canvas.getBoundingClientRect(), mx = ev.clientX - r.left, my = ev.clientY - r.top;
+  if (drag === "picker") {
+    let best = 0, bd = Infinity;
+    for (let i = 0; i < pkN; i++) {
+      tmpV.set(pkHalo[3 * i] * S, pkHalo[3 * i + 1] * S, pkHalo[3 * i + 2] * S).project(camera);
+      const dx = ((tmpV.x + 1) / 2) * r.width - mx, dy = ((1 - tmpV.y) / 2) * r.height - my, d = dx * dx + dy * dy;
+      if (d < bd) { bd = d; best = i; }
+    }
+    if (best !== pkIndex) setPicker(best);
+  } else {
+    tmpV.copy(ring.position).project(camera);
+    const cx = ((tmpV.x + 1) / 2) * r.width, cy = ((1 - tmpV.y) / 2) * r.height;
+    let a = Math.atan2(-(my - cy), mx - cx) + Math.PI / 2; if (a < 0) a += Math.PI * 2;
+    setRingIndex(Math.round((a / (Math.PI * 2 * 0.92)) * (hillLevels.length - 1)));
+  }
+});
+const endDrag = () => { drag = null; controls.enabled = true; };
+canvas.addEventListener("pointerup", endDrag); canvas.addEventListener("pointercancel", endDrag);
+
+// ---------------------------------------------------------------- Pareto constellation (2D canvas)
+const pc = document.getElementById("paretoCanvas"), pctx = pc.getContext("2d");
+const SW = DATA.sweep;
+let pHover = -1, pBox = null;
+function drawPareto() {
+  if (!pc.clientWidth) return;
+  const dpr = Math.min(devicePixelRatio, 2), w = pc.clientWidth, h = pc.clientHeight;
+  pc.width = w * dpr; pc.height = h * dpr; pctx.setTransform(dpr, 0, 0, dpr, 0, 0); pctx.clearRect(0, 0, w, h);
+  const pts = SW ? SW.points : [[TRd.tof_days, TRd.total, 0, 0], [TRm.tof_days, TRm.total, 0, 1]];
+  const front = SW ? SW.front : [];
+  const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1] * 1000);
+  const YCAP = 4300; // a few poor candidates go to ~5,400 m/s; clipped and counted below
+const x0 = 0, x1 = Math.max(...xs) * 1.04, y0 = Math.floor(Math.min(...ys) / 100) * 100, y1 = Math.min(YCAP, Math.ceil(Math.max(...ys) / 100) * 100);
+  const L = 44, R = 8, T = 8, B = 22;
+  const X = (v) => L + ((v - x0) / (x1 - x0)) * (w - L - R), Y = (v) => h - B - ((v - y0) / (y1 - y0)) * (h - T - B);
+  pBox = { X, Y, front };
+  pctx.font = "10px 'IBM Plex Mono', monospace"; pctx.fillStyle = "#8e98ad"; pctx.strokeStyle = "rgba(150,172,214,0.15)"; pctx.lineWidth = 1;
+  for (let v = y0; v <= y1; v += 200) { pctx.beginPath(); pctx.moveTo(L, Y(v)); pctx.lineTo(w - R, Y(v)); pctx.stroke(); pctx.fillText(fmt(v), 4, Y(v) + 3); }
+  for (let v = 0; v <= x1; v += 50) { pctx.fillText(`${v} d`, X(v) - 8, h - 6); }
+  const nClip = pts.filter((p) => p[1] * 1000 > y1).length;
+  if (nClip) { pctx.fillStyle = "#8e98ad"; pctx.fillText(`${nClip} above ${fmt(y1)} m/s not shown`, w - R - 170, T + 10); }
+  for (const p of pts) { if (p[1] * 1000 > y1) continue; pctx.fillStyle = p[3] ? "rgba(94,200,255,0.45)" : "rgba(255,122,89,0.55)"; pctx.beginPath(); pctx.arc(X(p[0]), Y(p[1] * 1000), 2, 0, 7); pctx.fill(); }
+  if (front.length) {
+    pctx.strokeStyle = "rgba(232,237,246,0.55)"; pctx.beginPath();
+    front.forEach((c, i) => { const x = X(c.tof_days), y = Y(c.total * 1000); i ? pctx.lineTo(x, y) : pctx.moveTo(x, y); }); pctx.stroke();
+    front.forEach((c, i) => {
+      const x = X(c.tof_days), y = Y(c.total * 1000), r = i === pHover ? 7 : 4.5;
+      const g = pctx.createRadialGradient(x, y, 0, x, y, r * 2.4); g.addColorStop(0, c.kind === "manifold" ? "#bfeaff" : "#ffd0bf"); g.addColorStop(1, "rgba(0,0,0,0)");
+      pctx.fillStyle = g; pctx.beginPath(); pctx.arc(x, y, r * 2.4, 0, 7); pctx.fill();
+      pctx.fillStyle = "#ffffff"; pctx.beginPath(); pctx.arc(x, y, r * 0.45, 0, 7); pctx.fill();
+    });
+    if (pHover >= 0) {
+      const c = front[pHover]; const tx = `${fmt(c.total * 1000)} m/s · ${fmt(c.tof_days, 1)} d · L${SW.halos[c.halo].L} ${c.kind}`;
+      pctx.fillStyle = "#e8edf6"; pctx.font = "11px 'IBM Plex Mono', monospace";
+      const tw = pctx.measureText(tx).width, x = Math.min(w - tw - 6, Math.max(L, X(c.tof_days) - tw / 2));
+      pctx.fillText(tx, x, Math.max(14, Y(c.total * 1000) - 14));
+    }
+  }
+}
+function paretoHit(ev) {
+  if (!pBox || !pBox.front.length) return -1; const r = pc.getBoundingClientRect(), mx = ev.clientX - r.left, my = ev.clientY - r.top;
+  let best = -1, bd = 196; pBox.front.forEach((c, i) => { const dx = pBox.X(c.tof_days) - mx, dy = pBox.Y(c.total * 1000) - my, d = dx * dx + dy * dy; if (d < bd) { bd = d; best = i; } });
+  return best;
+}
+pc.addEventListener("pointermove", (ev) => { const i = paretoHit(ev); if (i !== pHover) { pHover = i; drawPareto(); } });
+pc.addEventListener("click", (ev) => flyFront(paretoHit(ev)));
+function flyFront(i) {
+  if (i < 0 || !SW) return;
+  const c = { ...SW.front[i], L: SW.halos[SW.front[i].halo].L }; flyCandidate(c); exOn.add("flight"); applyExplore();
+  toast(`${fmt(c.total * 1000)} m/s · ${fmt(c.tof_days, 1)} days`);
+  flyTo([2, -20, 15], [4, 0, 0], 2.0);
+}
+
+// ---------------------------------------------------------------- modes
+const modeStory = document.getElementById("modeStory"), modeExplore = document.getElementById("modeExplore");
+const capEl = document.getElementById("caption"), exEl = document.getElementById("explore");
+function setMode(m) {
+  mode = m; modeStory.setAttribute("aria-pressed", m === "story"); modeExplore.setAttribute("aria-pressed", m === "explore");
+  capEl.hidden = m !== "story"; exEl.hidden = m !== "explore";
+  if (m === "story") { frameTarget = frameS = 0; buildTransferLines(0); goChapter(chapter); }
+  else { setPicker(pkIndex); setRingIndex(Math.floor(hillLevels.length * 0.35)); applyExplore(); flyTo([3, -18, 13], [5.5, 0, 0], 2.2); requestAnimationFrame(drawPareto); }
+}
+modeStory.onclick = () => setMode("story"); modeExplore.onclick = () => setMode("explore");
+document.getElementById("prev").onclick = () => goChapter(chapter - 1);
+document.getElementById("next").onclick = () => goChapter(chapter + 1);
+const playBtn = document.getElementById("play");
+playBtn.onclick = () => { playing = !playing; playBtn.textContent = playing ? "❚❚" : "▶▶"; playBtn.setAttribute("aria-label", playing ? "Pause" : "Play"); if (playing) chStart = clock - Math.min(clock - chStart, CH[chapter].dur - 0.5); };
+addEventListener("keydown", (e) => { if (mode !== "story") return; if (e.key === "ArrowRight") goChapter(chapter + 1); if (e.key === "ArrowLeft") goChapter(chapter - 1); });
+
+// ---------------------------------------------------------------- main loop (fixed-step when recording)
+let clock = 0, last = performance.now();
+function frame(dt) {
+  clock += dt;
+  if (mode === "story") storyFrame(); else exploreFrame();
+  if (!REDUCED && mode === "story" && !camFrom) { const a = 0.02 * dt; const v = camera.position.clone().sub(controls.target); v.applyAxisAngle(new THREE.Vector3(0, 0, 1), a); camera.position.copy(controls.target).add(v); }
+  updateCamera(); controls.update();
+  earth.rotation.z += dt * 0.05; moon.rotation.z += dt * 0.01;
+  if (clock > toastUntil) toastEl.style.opacity = 0;
+  composer.render(); updateLabels();
+}
+function loop(now) { const dt = Math.min(0.05, (now - last) / 1000); last = now; frame(dt); requestAnimationFrame(loop); }
+window.__cislunar = { step: (dt) => frame(dt), chapters: CH.map((c) => c.dur), go: goChapter, mode: setMode, fly: flyFront, debug: { bloom, renderer, scene, composer, Color: THREE.Color } };
+addEventListener("resize", resize);
+document.getElementById("loading").hidden = true;
+resize(); goChapter(0);
+if (!RECORD) requestAnimationFrame(loop);
+</script>

@@ -153,6 +153,7 @@ for key, name in (("d", "direct"), ("m", "manifold")):
         xyz=b64(X[idx]),
         t_burn2=0.0,
         t_dep=float(t1[0]),
+        arc_days=info["tof_arc_days"],
         dv1=info["dv1_km_s"],
         dv2=info["dv2_km_s"],
         total=info["dv_total_km_s"],
