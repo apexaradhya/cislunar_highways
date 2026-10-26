@@ -19,3 +19,9 @@ One short note per phase: the idea in plain language, an analogy, the key equati
 **Analogy.** Points on a hilly landscape where the ground is perfectly flat. L1–L3 are like mountain passes (saddles): flat, but step off the wrong way and you roll away. L4/L5 are hilltops. You'd expect them to be unstable too, but the Coriolis force keeps a small drift curving around the point, as long as the Moon is light enough: 27μ(1−μ) < 1.
 **Key equation.** `x − (1−μ)(x+μ)/|x+μ|³ − μ(x−1+μ)/|x−1+μ|³ = 0`, solved with Brent's method. L1 is 58,019 km from the Moon and L2 is 64,515 km.
 **Check yourself.** Why does each of the three intervals contain exactly one collinear point? (Answer: f goes from −∞ to +∞ across each interval and is always increasing, since f′ = 1 + 2c > 0.)
+
+## Phase 4: Hill regions (zero-velocity curves)
+**Idea.** Since C = 2Ω − v² and v² can't be negative, a spacecraft with a given C can only go where 2Ω ≥ C. Everywhere else is a "forbidden zone". As you add energy (lower C), the walls retreat, and "necks" open, first at L1 (Earth ↔ Moon), then L2 (out past the Moon), then L3.
+**Analogy.** A ball rolling in a bowl with a dent in the rim. With too little energy it can't get over the dent. With just a bit more, there's a narrow pass. L1 is that pass, and it's exactly where low-energy transfers squeeze through.
+**Key equation.** Forbidden region: `2Ω(x, y, 0) < C`. The neck at Lᵢ opens when C < C(Lᵢ).
+**Check yourself.** We found where the necks open using only geometry (flood-filling the allowed region on a grid). Why is it convincing that the results match C(L1), C(L2), C(L3) from Phase 3 to within 10⁻⁵? (Answer: the two methods are independent, one root-finding and one picture-based, so agreement is strong evidence both are right.)

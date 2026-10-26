@@ -55,3 +55,14 @@ Running log of phase status, test numbers, and decisions. Newest phase at the bo
   - L4/L5 are equilateral to 1e-15.
 - Routh: 27μ(1−μ) = 0.324 for Earth–Moon, so L4/L5 are stable. Threshold mu_Routh = 0.0385209. The numerical eigenvalue test agrees on 7 values of mu (stable at Sun–Earth, Earth–Moon, 0.03, 0.038; unstable at 0.039, 0.1, 0.5).
 - Figure: `p3_lagrange_points` (with a to-scale zoom near the Moon).
+
+### Phase 4: Hill regions ✅
+- `hill.py`: 2Ω grid, forbidden mask, realm connectivity (via `scipy.ndimage.label`, used for connected-component bookkeeping only), and bisection for the neck-opening C.
+- Geometric neck-opening C compared with C(Lᵢ) from Phase 3:
+  - L1: +9.4e-6
+  - L2: +7.4e-7
+  - L3: +2.7e-6
+
+  All are within the grid bound of 3e-5, derived from the grid spacing h = 2e-3.
+- Decision: the bias is one-sided (found ≥ C(Lᵢ)), because the grid misses the exact minimum of 2Ω across the neck. The test asserts this direction.
+- Figure: `p4_hill_regions` (6 panels from C > C1 to C < 3).
