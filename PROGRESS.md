@@ -141,3 +141,26 @@ Running log of phase status, test numbers, and decisions. Newest phase at the bo
   - Tried and rejected: a half-period symmetric monodromy formula. It agrees with the full-period M to 4e-12, but on near-Moon orbits it was worse (split 3.5e-4).
 - **Pending:** `test_halo.py::test_matches_jpl_catalog` is skipped until JPL halo entries are available.
 - Figures: `p8_halo_families_3d`, `p8_halo_projections`, `p8_halo_stability`, `p8_nrho_9_2`.
+
+### Phase 9: Invariant manifolds ✅ (tag `v0.1-core`)
+- `manifolds.py`:
+  - Eigen-directions of M.
+  - Orbit + STM sampling.
+  - Eigenvector transport v(tᵢ) = Φ(tᵢ,0)v(0) with the position part normalized.
+  - Tubes with terminal events (Earth/Moon impact, escape, optional section).
+  - Stroboscopic distance tool.
+- **Decision:** default ε = 1e-5 (≈3.8 km). Reasoning:
+  - At ε = 1e-6, L2 halo tubes need ~20 days just to leave the orbit.
+  - At ε = 1e-5, the energy error is still only ~4.6e-10.
+  - Sensitivity measured: each decade of ε shifts the departure by 5.00 d (theory T·ln10/ln λ_u = 4.92 d). Whole tubes at ε = 1e-6 and 1e-4 overlap. So ε re-labels the strands but doesn't change the tube.
+- Tests (L2 halo with λ_u ≈ 106) and figure runs (λ_u ≈ 980):
+  - λ_u·λ_s = 1 to 8e-11.
+  - ∇C·v = O(1e-13), confirming the theory that eigenvectors with λ ≠ 1 are energy-neutral.
+  - C changes only at O(ε²): 10× ε gives ~100× ΔC.
+  - Jacobi along 480 trajectories: ≤ 4.6e-10 (spec ~1e-8).
+- **Asymptotic approach** (L2 halo, λ_s = 0.001020):
+  - Forward 1-period contraction: 0.000994 (2.5% off).
+  - Backward 3-period growth ratios: 976.0, 980.6, 978.5, against 1/λ_s = 980.6.
+- **Finding:** forward-time convergence can only be watched for about one period. Any unstable component (roundoff, O(ε²) curvature) grows by λ_u per period and takes over. The multi-period exponential rate is therefore verified backward in time, where the stable direction is the growing one. The test covers both.
+- Figures: `p9_manifold_tubes_3d` (hero), `p9_manifold_tubes_xy`, `p9_asymptotic_rate`, `p9_eps_sensitivity`.
+- Process note: two script edits silently failed to apply (`str.replace` found no match after `ruff format` re-wrapped the lines), so a figure showed stale results. All edits now go through the Edit tool or assert a match.

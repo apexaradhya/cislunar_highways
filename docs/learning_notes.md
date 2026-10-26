@@ -54,3 +54,13 @@ That's "saddle × center × center".
 **Analogy.** Pushing a child on a swing who starts twisting. Once the twisting rhythm matches the swinging rhythm, the motion locks into a new 3D pattern.
 **Key equation.** Bifurcation where the vertical stability index ν_v = (λ + 1/λ)/2 crosses +1. Our 9:2 NRHO (period = 2/9 of a synodic month = 6.562 d) has perilune radius 3,249 km and apolune radius 71,222 km. NASA's published orbit is about 3,200–3,560 km and 70,000–71,850 km.
 **Check yourself.** Why couldn't we just keep increasing z₀ to walk along the family? (Answer: z₀ reaches a maximum and turns back, a "fold". Pseudo-arclength continuation steps along the curve itself, so it can go around the bend.)
+
+## Phase 9: Invariant manifolds, the "gravitational highways"
+**Idea.** A halo orbit is unstable: nudge a spacecraft off it and it drifts away exponentially, along one special direction. Nudge it in the *opposite* sense along a second direction and it slides back onto the orbit by itself. Doing this from every point around the orbit traces out two tube-shaped surfaces:
+- the **unstable manifold** (paths that leave the orbit)
+- the **stable manifold** (paths that arrive at the orbit, with no braking needed).
+
+Ride the stable tube in, and you reach the halo for free.
+**Analogy.** A ball balanced on a ridge between two valleys. There is exactly one "gutter" along which a rolling ball comes to rest on the ridge. Every other path rolls off. The stable manifold is that gutter.
+**Key equation.** `X = γ(tᵢ) ± ε Φ(tᵢ,0) v_s`. Each period, distance along v_s shrinks by λ_s = 1/λ_u. For our L2 halo, λ_u = 980.6: errors grow 980× per 15-day lap.
+**Check yourself.** Why does making ε 10× smaller make the spacecraft leave about 5 days later, without giving a different tube? (Answer: one lap multiplies the distance by λ_u. Starting 10× closer costs ln10/ln λ_u of a lap, which is T·ln10/ln λ_u = 4.92 days. We measured 5.00.)
