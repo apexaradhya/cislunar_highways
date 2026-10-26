@@ -77,10 +77,13 @@ h1 { margin: 0; font-family: var(--display); font-weight: 700; font-size: clamp(
 body.record .modes, body.record .caption .ctls { display: none; }
 body.record .lab, body.record .toast { transition: none; }
 @media (max-width: 640px) {
-  .hud { min-width: 0; font-size: 11px; padding: 8px 10px; }
+  .hud { min-width: 0; font-size: 10px; padding: 7px 9px; gap: 4px; }
+  .hud .row span { white-space: nowrap; }
   .caption h2 { font-size: 20px; }
   .caption p { font-size: 13px; }
-  #paretoCanvas { height: 140px; }
+  .note, .tools .hint, .pareto .s { display: none; }
+  .tools { padding: 10px; gap: 8px; }
+  #paretoCanvas { height: 110px; }
 }
 @media (prefers-reduced-motion: reduce) { .lab, .toast { transition: none; } }
 </style>

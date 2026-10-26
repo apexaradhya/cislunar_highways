@@ -92,3 +92,13 @@ The manifold route saves 671 m/s, about 16%, and pays for it in time: 27× longe
 **Analogy.** Weather forecasting. The physics is exact, but a small error in today's measurement grows into a wrong forecast in about two weeks.
 **Key equation.** Only the part of the error along the unstable direction grows: `spread(t) ≈ |c_u| · λ_u^(t/T)`, with `c_u` found from the left eigenvector of the monodromy matrix. This forecast matched the 500-spacecraft simulation to within 0.5 days from 10 km to 10,000 km.
 **Check yourself.** Why did our first forecast fail? (Answer: we only counted the 1 m position error. The 1 cm/s velocity error has a much bigger component, ~1 km, along the unstable direction.)
+
+## Phase 11b: Mapping the design space
+**Idea.** One transfer is an answer. A map of hundreds of transfers is understanding. We corrected 546 candidates for 7 different halos and two parking-orbit heights, and plotted fuel against flight time. The lower-left edge of that cloud, the Pareto front, holds the only designs worth flying: anything above it costs more fuel for the same time.
+**Analogy.** Comparing flights by price and duration. Some itineraries are simply worse on both, and the front is the set of sensible choices.
+**Key finding.** Riding manifolds saves 450–660 m/s for L2 halos, but only 40–150 m/s for L1 halos, because direct trips to L1 are already cheap.
+**Check yourself.** Why does a 300 km parking orbit save ~30 m/s compared with 185 km? (Answer: a higher orbit is already part-way out of Earth's gravity well, so the TLI burn is smaller.)
+
+## Phase 12: Showing the work
+**Idea.** A picture of a computation is only honest if every pixel comes from the computation. The explorer draws only trajectories the package actually computed. When an artistic choice could mislead (Earth and Moon drawn 3× size), the page says so, and it switches to true scale where it matters (the NRHO's 1,512 km perilune).
+**Check yourself.** Why does the low-energy path look like a tangle in the rotating frame but like a spiral in the inertial frame? (Answer: the rotating frame turns once every 27.3 days, so each loop of a slow spiral shows up as a curl.)

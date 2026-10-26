@@ -237,3 +237,44 @@ Running log of phase status, test numbers, and decisions. Newest phase at the bo
 - Tests: batch propagation = individual to 1e-9; unstable component recovered to 1e-6; forecast within 2 d on a 60-member ensemble.
 - Figures: `p11c_butterfly_fan`, `p11c_tli_monte_carlo`. Data: `data/predictability.json`, `data/butterfly_fan.npz`.
 - Phase 11b design sweep is still running (`scripts/run_phase11b_sweep.py`; 7 halos × 2 LEO altitudes).
+
+### Phase 11b: Design sweep ✅ (approved add-on)
+- `transfer.design_candidates`: screen and CR3BP-correct direct and manifold candidates for one orbit. `scripts/run_phase11b_sweep.py` covers 7 halos (L1: 3, L2: 4) × LEO 185/300 km, giving **546 corrected candidates** (`data/design_sweep.json`).
+- Best direct vs manifold (m/s, LEO 185 km):
+
+  | Target | Direct | Manifold | Saving |
+  |---|---|---|---|
+  | L2 Az 8,924 km | 4,112 | 3,604 | 508 |
+  | L2 Az 20,370 km | 4,105 | 3,442 | 662 |
+  | L2 Az 38,983 km | 4,074 | 3,535 | 539 |
+  | L2 Az 57,184 km | 4,030 | 3,584 | 446 |
+  | L1 Az 8,422 km | 3,740 | 3,603 | 137 |
+  | L1 Az 23,778 km | 3,729 | 3,584 | 145 |
+  | L1 Az 46,916 km | 3,689 | 3,651 | 38 |
+
+  A 300 km LEO is ~30 m/s cheaper for every target.
+- The 19 Pareto-front transfers were rebuilt independently for the explorer; all reproduce their Δv exactly.
+- Figure: `p11b_design_space`.
+
+### Phase 12: Visualization, interactivity, packaging ✅
+- **Cinematic explorer** (`web/explorer_template.html` → `docs/explorer/cislunar_explorer.html`, 2.45 MB single file):
+  - three.js 0.160.0 with bloom, procedural Earth/Moon shading and a starfield.
+  - **Story mode:** 9 chapters with captions whose numbers come from the data.
+  - **Explore mode:**
+    - drag a marker around the halo to choose the strand (96 precomputed);
+    - drag a ring around L1 to change the energy (32 zero-velocity curves);
+    - click Pareto-front transfers to fly them;
+    - morph between the rotating and inertial frames;
+    - toggle layers.
+  - Published as a private artifact: https://claude.ai/artifact/KvggXGPjNuYvTiigeYiX5F
+- **Video:** `docs/explorer/cislunar_highways_story_1080p.mp4`. Frames are rendered deterministically by stepping the clock in headless Chromium and screenshotting each one (`web/frames.mjs`); real-time capture only reached 7 fps.
+- Plotly single-file 3D: `docs/figures/p12_interactive_3d.html`. Animation in both frames: `p12_transfer_both_frames.gif` / `.mp4`.
+- **One command:** `scripts/run_final_demo.py` (`make demo`) recomputes from scratch in ~95 s and gets direct 4,105 / manifold 3,442 m/s, against 4,103 / 3,432 in the full run.
+- **Notebook:** `notebooks/demo.ipynb`, executed with nbclient; outputs saved.
+- Decisions and fixes:
+  - **Grey background:** the haze came from 8-bit linear render targets in software GL (dark non-zero clear colours quantize to grey). Fixed with a pure-black clear.
+  - **True-scale Moon** in the NRHO view, because the 3× Moon would hide the 1,512 km perilune.
+  - **CDN workaround:** this container cannot reach jsDelivr, so local renders serve the same URLs from an npm copy of three@0.160.0 via Playwright routing. The published page loads from the CDN.
+
+### Phase 13: Documentation ✅
+- `README.md`, `docs/results.md` (validation table, results, limitations per spec §6), `docs/math_notes.md` (derivations; draft to restate in your own words), `docs/qa_prep.md` (the 10 defense questions), `docs/references.md` (with verification status).

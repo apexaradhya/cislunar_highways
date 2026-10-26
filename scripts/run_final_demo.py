@@ -66,7 +66,7 @@ tubes = {
 step("manifold tubes generated (4 x 40 strands, 35 days)")
 
 cands = transfer.design_candidates(
-    halo, U, leo_alt_km=185.0, n_correct=15, n_direct=6, n_strands=40, duration=40.0
+    halo, U, leo_alt_km=185.0, n_correct=40, n_direct=6, n_strands=60, duration=40.0
 )
 best = {
     k: min((c for c in cands if c["kind"] == k), key=lambda c: c["total"])
@@ -109,9 +109,11 @@ for name, a, b, tof, fr in rows:
     )
 print("-" * 104)
 print(
-    "Demo uses a reduced search (15 manifold candidates, no refinement), so its low-energy total can sit a"
+    "Demo uses a reduced search (40 corrected manifold candidates, no Nelder-Mead refinement); refinement"
 )
-print("little above the full run's. Full details: docs/results.md.\n")
+print(
+    "in the full run lowers the low-energy total by roughly 10 m/s. Full details: docs/results.md.\n"
+)
 
 
 def draw(t):
