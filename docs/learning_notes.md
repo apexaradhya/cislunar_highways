@@ -70,3 +70,19 @@ Ride the stable tube in, and you reach the halo for free.
 **Analogy.** Two garden hoses passing through a fence. Where their holes in the fence overlap, water could flow from one hose straight into the other.
 **Key fact.** At C = 3.17, the first cuts of the L1-unstable and L2-stable tubes do *not* overlap. Their second cuts do. Refining that crossing gave a verified L1 → L2 transfer: **Δv = 0, 48.5 days**, with the full states matching to 4×10⁻¹⁰.
 **Check yourself.** Why does matching only (y, vy) on the wall guarantee the whole state matches, in the planar problem? (Answer: x is fixed by the wall, and both trajectories have the same C. That fixes the speed and so |vx|; we then check the sign of vx.)
+
+## Phase 11: Designing the transfer, and the honest result
+**Idea.** Every Moon trip starts with a big burn in low Earth orbit (TLI, about 3.1 km/s). The difference is in what comes after.
+- **Direct route:** arrive at the halo in ~6 days going too fast, then brake hard (0.94 km/s).
+- **Low-energy route:** aim for a point on the halo's stable manifold instead, match its speed with a smaller burn (0.33 km/s), then coast "downhill" to the halo with the engine off.
+
+**Analogy.** Catching a moving train. You can sprint straight to the platform and brake hard (direct). Or you can jog to a point down the line where the train is still slow, match its speed there, and ride in (manifold).
+**Key numbers (full CR3BP, LEO 185 km → L2 halo):**
+
+| Route | Total Δv | Time of flight |
+|---|---|---|
+| Direct | 4,103 m/s | 6 d |
+| Manifold | 3,432 m/s | 168 d |
+
+The manifold route saves 671 m/s, about 16%, and pays for it in time: 27× longer.
+**Check yourself.** Why can't the manifold route skip the TLI burn entirely? (Answer: in the Earth–Moon CR3BP, these manifolds never come closer than ~40,000 km to Earth. You still have to climb out of Earth's deep gravity well. Missions like CAPSTONE use the *Sun's* pull to get closer, which our model leaves out.)

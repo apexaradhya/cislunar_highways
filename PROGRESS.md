@@ -182,3 +182,35 @@ Running log of phase status, test numbers, and decisions. Newest phase at the bo
   - Diagnosis: the mismatch comes from the starting points γ(t) and γ(T−t) (≈1e-12 apart; they are sampled from one forward pass), amplified by λ_u^(t/T) ≈ 1e4 over the flight. The test bound of 1e-7 is derived from this error budget. (This test is my own addition, not a spec tolerance.)
 - **Result:** the first cuts don't intersect. The second cuts intersect once, and Newton refinement of the two phases confirms a **heteroclinic L1 → L2 connection**: state mismatch 3.6e-10, vx = 0.234897 on both sides, Δv = 0, flight 22.2 + 26.3 = 48.5 d. Saved in `data/heteroclinic_L1_L2_C3.17.json`.
 - Figures: `p10_lyapunov_heteroclinic` (tubes, 1st cuts, 2nd cuts, verified connection) and `p10_halo_tube_cut`.
+
+### Phase 11: LEO → L2 halo transfer ✅
+- `transfer.py`:
+  - Frames (spec 1.10, with time rotation).
+  - Patched-conic LEO → LLO estimate.
+  - Vectorized tangential-departure conic screening.
+  - CR3BP leg correction (free departure velocity + TOF, minimum-norm Newton, backtracking).
+  - Candidate generation on the manifold and on the orbit; continuous (phase, τ) manifold points.
+  - Nelder–Mead refinement (scipy optimizer, applied to my own CR3BP-corrected objective).
+- **Exploration finding:** within 170 days of backward flight, no L1/L2 halo stable manifold comes closer than ~42,000 km to Earth (16 halo/branch combinations tested). So a one-burn LEO → manifold transfer is impossible in this model, and a patch burn is required.
+- **Method:**
+  1. Screen 154,776 manifold points and 400 halo points with Earth-only conics.
+  2. Correct the best 60 + 20 distinct candidates in the CR3BP.
+  3. Refine with Nelder–Mead.
+  4. Assemble end-to-end in the CR3BP.
+- **Finding:** the screening is biased for patch points near the Moon. Screened 3.28 km/s turned into 3.62–3.96 km/s once corrected. All final numbers are CR3BP-corrected.
+- **Bug fixed:** fixed-TOF shooting from LEO failed because Φ_rv is nearly singular on near-parabolic arcs (singular values 15.9 / 0.24 / 0.0011). Freeing TOF made it converge in 4–7 iterations.
+- **Results** (LEO 185 km; L2 northern halo, Az ≈ 20,370 km, period 14.73 d, C = 3.152169; `data/transfer_results.json`):
+
+  | Design | TLI | 2nd burn | Total | TOF |
+  |---|---|---|---|---|
+  | Patched conic → 100 km LLO (estimate) | 3,135 | 824 | 3,959 m/s | 5.0 d |
+  | Direct → halo (CR3BP) | 3,161 | 941 | **4,103 m/s** | 6.1 d |
+  | Manifold → halo (CR3BP) | 3,107 | 325 (+0.2 clean-up) | **3,432 m/s** | 168.4 d (3.4 + 165.0) |
+
+  - The manifold route saves 671 m/s (16%) for 162 extra days.
+  - Pareto front: about 3,660 m/s at 24 d, 3,617 m/s at 74 d, 3,450 m/s at 143 d.
+- **Jacobi bookkeeping** (acceptance ✅): C = 58.15 in LEO → 2.928 after TLI (drift 2.8e-10 over leg 1) → 3.152169 after the patch burn, equal to the halo's C (drift 1.8e-10 over 165 d).
+- **Honest caveats:**
+  - The manifold arc's nominal arrival lands 254 km from the halo instead of ε = 3.8 km. 165 days through a chaotic region magnify ~1e-12 integration error about 10⁸×. Closest approach is 44 km, and the clean-up insertion is 0.2 m/s. A real mission would fly trajectory-correction maneuvers.
+  - LEO plane is free (the departure plane is chosen to contain the needed velocity). Launch-site constraints are ignored.
+- Figures: `p11_transfer_rotating`, `p11_transfer_inertial`, `p11_dv_vs_tof`, `p11_dv_breakdown`, `p11_arrival_distance`.
