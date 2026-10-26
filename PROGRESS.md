@@ -36,3 +36,22 @@ Running log of phase status, test numbers, and decisions. Newest phase at the bo
 - Decision: the triple-root Brent test compares against the exact root (0.3), because scipy's brentq fails to converge on it within its default 100 iterations.
 - Decision: the RK4 order test uses y' = y cos t rather than the harmonic oscillator. Sampling the oscillator over whole periods cancels the leading error term, and the measured slope came out 5.0.
 - Figures: `p2_convergence`, `p2_jacobi_drift`, `p2_sample_trajectory` (each in light and dark).
+
+### Phase 3: Lagrange points ✅
+- `lagrange.py`: own Brent + one Newton polish for L1–L3; closed form for L4/L5; Jacobi constant at each point; Routh threshold; numerical stability test via the eigenvalues of A.
+- Earth–Moon:
+
+  | Point | x | C | Distance from the Moon |
+  |---|---|---|---|
+  | L1 | 0.836915134104 | 3.200344049361 | 58,019 km |
+  | L2 | 1.155682158932 | 3.184163394831 | 64,515 km |
+  | L3 | −1.005062645105 | 3.024150096215 | — |
+  | L4/L5 | — | 3 (exactly) | — |
+
+- Tests:
+  - Force residual < 1e-13 for mu ∈ {Earth–Moon, Sun–Earth, 0.1, 0.5}.
+  - Matches scipy brentq to 1e-14.
+  - Matches the literature values (Koon et al. 2011) to 1e-4.
+  - L4/L5 are equilateral to 1e-15.
+- Routh: 27μ(1−μ) = 0.324 for Earth–Moon, so L4/L5 are stable. Threshold mu_Routh = 0.0385209. The numerical eigenvalue test agrees on 7 values of mu (stable at Sun–Earth, Earth–Moon, 0.03, 0.038; unstable at 0.039, 0.1, 0.5).
+- Figure: `p3_lagrange_points` (with a to-scale zoom near the Moon).
