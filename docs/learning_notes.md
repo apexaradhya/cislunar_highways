@@ -42,3 +42,9 @@ That's "saddle × center × center".
 **Analogy.** A ripple map. Drop a pebble (small error) at the start, and Φ tells you how big the ripple is, and in which direction it points, at the end.
 **Key equation.** `δX(t) ≈ Φ(t,0) δX(0)`. Two built-in sanity checks: det Φ = 1 (phase-space volume is never squashed, because trace A = 0) and `ΦᵀJΦ = J` (the dynamics are symplectic, a "Hamiltonian fingerprint").
 **Check yourself.** Why do we check Φ against finite differences, and why don't they agree perfectly? (Answer: finite differences are an independent, brute-force estimate. They carry their own truncation and round-off error, about 10⁻⁹ relative here.)
+
+## Phase 7: Planar Lyapunov orbits and differential correction
+**Idea.** A periodic orbit is a path that closes on itself. We guess a starting point on the x-axis, fly until we cross the x-axis again (half an orbit), and check whether we crossed it perpendicularly (vx = 0). If we didn't, the STM tells us how to tweak the starting speed vy₀ to fix it. Repeat (Newton's method). By the mirror symmetry of the CR3BP, a perpendicular crossing guarantees the orbit closes.
+**Analogy.** Throwing a ball at a wall so it bounces straight back. Miss the angle a bit, see how far off you were, adjust the throw, and repeat. Two or three throws are enough.
+**Key equation.** `δvx_f = [Φ₄₅ − (a_x/v_y) Φ₂₅] δvy₀`. The `(a_x/v_y)` term exists because changing vy₀ also changes *when* you cross the axis.
+**Check yourself.** Why can't we just take a big orbit's starting point from the linear formula? (Answer: the linear solution is only accurate for small orbits. For big ones, Newton's method starts too far away and diverges. That's why we "walk" out step by step, which is called continuation.)

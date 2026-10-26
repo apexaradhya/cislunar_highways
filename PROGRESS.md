@@ -87,3 +87,21 @@ Running log of phase status, test numbers, and decisions. Newest phase at the bo
   - |det Φ − 1| ≤ 1.6e-12 (spec 1e-9).
   - Jacobi drift ≤ 2e-14.
 - Decision: implemented **both** checks. Symplecticity uses J_v = [[W, I], [−I, 0]] in velocity coordinates, where W = [[0,−2,0],[2,0,0],[0,0,0]] is the Coriolis twist. This is because p = v + ω×r, so J_v = TᵀJT. Its infinitesimal form `AᵀJ_v + J_vA = 0` is also tested at random states.
+
+### Phase 7: Planar Lyapunov orbits ⚠️ (complete except the JPL catalog comparison)
+- `shooting.py`: symmetric differential corrector, implementing spec 1.7 including the (a/v_y) crossing-time terms. It works for any choice of free variables and targets (planar or halo), and adds one polishing Newton step after convergence.
+- `orbits.py`: Lyapunov seeds, adaptive natural-parameter continuation (halves the step on failure), monodromy, reciprocal-pair matching, stability index.
+- Results: 40 orbits per family. Data saved in `data/lyapunov_L{1,2}.npz`.
+
+  | Family | Period | Max amplitude | Stability index ν | Max closure |
+  |---|---|---|---|---|
+  | L1 | 11.69–26.84 d | 61,504 km | 56–1335 | 9e-13 |
+  | L2 | 14.65–33.48 d | 96,100 km | 50–726 | 1e-11 |
+
+- Closure spec is < 1e-10 for both.
+- Small-orbit period → linear period. At A = 1e-4 the relative difference is < 1e-5, and the correction scales as A² (measured ratio of ~100 for 10× the amplitude).
+- Trivial monodromy pair: mean = 1 to < 1e-8, and M f = f to < 1e-7. The *individual* eigenvalues spread by up to ~3e-5 on the largest orbits.
+  - Decision: the eigenvalue 1 is defective (a Jordan block), so roundoff ε splits it by √(ε‖M‖). The test therefore checks the mean and the flow eigenvector. The 1e-6 spec on individual eigenvalues is met only for smaller orbits; documented rather than loosened.
+- Decision: the L2 family is parametrized by its **far-side** x-crossing. The Moon-side parametrization marched into the Moon and silently jumped to a small lunar orbit (period 0.02); a period-jump guard now catches this.
+- **Pending:** `tests/test_lyapunov.py::test_matches_jpl_catalog` is skipped until catalog entries are provided (`tests/data/jpl_lyapunov.json`).
+- Figures: `p7_lyapunov_families`, `p7_lyapunov_stability`.
