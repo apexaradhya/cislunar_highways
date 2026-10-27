@@ -2,7 +2,15 @@
 
 **Low-energy Earth-to-Moon transfers in the circular restricted three-body problem, built from scratch and checked against independent references.**
 
+**▶ [Open the interactive 3D explorer](https://USERNAME.github.io/REPO/)** (runs in your browser, nothing to install)
+<!-- After enabling GitHub Pages (Settings → Pages → Branch: main, folder: /docs), replace USERNAME/REPO above. -->
+
 ![Stable (blue) and unstable (amber) manifold tubes of L1 and L2 halo orbits](docs/figures/explorer_highways.png)
+
+### In plain words
+Spacecraft don't have to fly straight to the Moon. Between the Earth and the Moon there are invisible "highways": paths along which gravity alone carries a spacecraft onto special orbits near the Moon, with the engine switched off. This project finds those highways mathematically, then uses one to plan a trip from Earth orbit to a lunar orbit like the one NASA chose for its Gateway station. The highway route uses **16 % less fuel** than flying direct, but takes **168 days instead of 6**. All the physics and numerical methods are written from scratch and tested against independent references.
+
+![The low-energy transfer in the rotating frame (left) and as seen from a non-rotating frame (right)](docs/figures/p12_transfer_both_frames.gif)
 
 The project builds a numerical toolchain from first principles:
 1. It finds the five Lagrange points of the Earth–Moon system.
@@ -44,14 +52,44 @@ LEO at 185 km to an L2 halo (vertical amplitude ≈ 20,400 km), computed in the 
 |---|---|
 | ![Two transfers](docs/figures/explorer_two_transfers.png) | ![Explore mode](docs/figures/explorer_explore_mode.png) |
 
-## Quickstart
+## Run it yourself
 
+### What you need
+| Software | Needed for | Get it |
+|---|---|---|
+| **Python 3.11 or newer** | everything | [python.org/downloads](https://www.python.org/downloads/) (on Windows, tick "Add Python to PATH") |
+| **Git** | downloading the project | [git-scm.com](https://git-scm.com/downloads) (or GitHub Desktop) |
+| **uv** (recommended) *or* pip | installing the exact library versions | [docs.astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/); pip comes with Python |
+| A web browser | the 3D explorer and interactive plots | any modern browser |
+| ffmpeg *(optional)* | re-making the MP4 animations | [ffmpeg.org](https://ffmpeg.org/download.html) |
+| Node.js + Playwright *(optional)* | re-rendering the explorer film | only for `web/frames.mjs` |
+
+It runs on Windows, macOS and Linux. No GPU or special hardware is needed; any laptop from the last ~8 years works.
+
+### Steps
 ```bash
-uv sync                                   # Python 3.11+; installs pinned dependencies
+git clone https://github.com/USERNAME/REPO.git
+cd REPO
+
+# Option A: uv (installs the exact versions in uv.lock)
+uv sync
 uv run pytest -q                          # 106 tests (+2 JPL-catalog tests that skip), ~1 min
-uv run python scripts/run_final_demo.py   # recompute the headline numbers from scratch (~2 min)
-make figures                              # regenerate every figure (the full transfer search takes ~20 min)
+uv run python scripts/run_final_demo.py   # recompute the headline numbers from scratch, ~2 min
+
+# Option B: plain pip
+python -m venv .venv
+source .venv/bin/activate                 # Windows: .venv\Scripts\activate
+pip install -r requirements.txt pytest
+pip install -e .
+python -m pytest -q
+python scripts/run_final_demo.py
 ```
+
+The demo prints the Lagrange points, builds an L2 halo orbit and its manifold tubes, designs the direct and low-energy transfers, and saves a figure to `docs/figures/demo_tubes.png`.
+
+To regenerate every figure, run `make figures` (macOS/Linux; about 30 minutes because of the full transfer search). On Windows, run the scripts listed under `FIGURE_SCRIPTS` in the `Makefile` one by one with `python scripts/<name>.py`. To rebuild the explorer after changing the data: `make explorer`.
+
+To try the explorer offline, double-click `docs/explorer/cislunar_explorer.html` (it needs an internet connection the first time, to load the 3D library).
 
 ## How we know it is right
 
@@ -96,3 +134,8 @@ Details: [`docs/results.md`](docs/results.md) §7.
 - [`docs/learning_notes.md`](docs/learning_notes.md): one short plain-language note per phase
 - [`PROGRESS.md`](PROGRESS.md): phase-by-phase log with test numbers and decisions
 - [`docs/references.md`](docs/references.md)
+- [`notebooks/demo.ipynb`](notebooks/demo.ipynb): the whole pipeline in one notebook, with outputs (GitHub renders it)
+
+## About
+
+Built by USERNAME as an independent research project. Written in Python with NumPy, SciPy (cross-checks only), Matplotlib and Plotly; the explorer uses three.js.
