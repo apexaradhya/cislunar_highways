@@ -1,5 +1,7 @@
 # PROGRESS
 
+This log was written by Claude (Anthropic's AI coding assistant) as it built the project phase by phase. See [CREDITS.md](CREDITS.md).
+
 Running log of phase status, test numbers, and decisions. Newest phase at the bottom.
 
 ## Decisions (defaults; change any of them)

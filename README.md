@@ -2,6 +2,8 @@
 
 **Low-energy Earth-to-Moon transfers in the circular restricted three-body problem, built from scratch and checked against independent references.**
 
+*Built in collaboration with [Claude](https://claude.ai), Anthropic's AI assistant. See [credits](#about-and-credits).*
+
 **▶ [Open the interactive 3D explorer](https://USERNAME.github.io/REPO/)** (runs in your browser, nothing to install)
 <!-- After enabling GitHub Pages (Settings → Pages → Branch: main, folder: /docs), replace USERNAME/REPO above. -->
 
@@ -136,6 +138,11 @@ Details: [`docs/results.md`](docs/results.md) §7.
 - [`docs/references.md`](docs/references.md)
 - [`notebooks/demo.ipynb`](notebooks/demo.ipynb): the whole pipeline in one notebook, with outputs (GitHub renders it)
 
-## About
+## About and credits
 
-Built by USERNAME as an independent research project. Written in Python with NumPy, SciPy (cross-checks only), Matplotlib and Plotly; the explorer uses three.js.
+**Built with [Claude](https://claude.ai) (Anthropic).** This project is a collaboration between me and Claude Code, Anthropic's AI coding assistant.
+
+- **My part:** I came up with the project and wrote the specification in [`PROJECT_SPEC.md`](PROJECT_SPEC.md). I chose the scope and the extra features (the design sweep, the predictability study and the 3D explorer). I reviewed the results and I present and defend the work.
+- **Claude's part:** Claude wrote the code, the tests, the figures, the 3D explorer and the documentation. That includes every numerical method in `src/cislunar/`, the 106-test suite, the transfer design and the validation checks.
+
+The full breakdown is in [`CREDITS.md`](CREDITS.md). The project uses Python with NumPy, SciPy (cross-checks only), Matplotlib and Plotly; the explorer uses three.js.
