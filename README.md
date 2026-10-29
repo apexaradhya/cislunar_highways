@@ -1,6 +1,8 @@
 # Cislunar Highways
 
-**Low energy E2M transfers in the circular restricted three body problem (earth, moon, and spacecraft/satellite). Built from scratch and checked against independent references (NASA JPL)**
+designed by Aradhya Pasikanti
+
+Low energy E2M transfers in the circular restricted three body problem (earth, moon, and spacecraft/satellite). Built from scratch and checked against independent references (NASA JPL)
 
 ### Overview
 Spacecraft don't have to fly straight to the Moon. Between the Earth and Moon there are gravitational paths (cislunar highways) where gravity can carry spacecraft into orbits with the Moon (using 0 fuel consumption). This project finds cislunar highways mathematically, then heuristically plans a trip from Earth orbit to a lunar orbit. The highway route is currently down to **16 % less fuel** than flying direct but takes **168 days instead of 6**. All the physics and numerical methods are written from scratch and tested against independent references as well.
