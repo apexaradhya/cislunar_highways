@@ -12,7 +12,7 @@ from cislunar import lagrange, manifolds, orbits
 from cislunar.constants import EARTH_MOON, R_EARTH_KM, R_MOON_KM
 from cislunar.shooting import SymmetricOrbit, full_period
 
-U = EARTH_MOON
+U =    EARTH_MOON
 MU, L, DAYS = U.mu, U.length_km, U.time_days
 
 st.set_page_config(page_title="Cislunar Highways", layout="wide")
