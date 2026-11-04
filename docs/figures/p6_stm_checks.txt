@@ -1,2 +1,0 @@
-sample loop, T=3  : ||Phi||max=4.953e+01  FD rel=5.47e-09  symplectic=1.03e-15  |det-1|=7.51e-13  Jacobi drift=2.26e-14
-near L1, T=2      : ||Phi||max=1.613e+02  FD rel=1.69e-09  symplectic=4.68e-17  |det-1|=1.58e-12  Jacobi drift=3.11e-15
