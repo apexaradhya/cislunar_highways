@@ -9,15 +9,10 @@ from cislunar.constants import EARTH_MOON, R_EARTH_KM, R_MOON_KM
 MU = EARTH_MOON.mu
 RE, RM = R_EARTH_KM / EARTH_MOON.length_km, R_MOON_KM / EARTH_MOON.length_km
 C_SECTION = (
-    3.17  # between C(L2) and C(L1): both necks open (Koon et al. 2011, ch. 3 example energy)
+    3.17  # between C(L2) and C(L1), both necks open
 )
 N = 24
 REVERSAL = np.array([1, -1, 1, -1, 1, -1.0])  # (x, y, z, vx, vy, vz) -> (x, -y, z, -vx, vy, -vz)
-# Error budget for the mirror test (diagnosed in Phase 10, see PROGRESS.md): the integrator
-# itself is exactly reversible (test below), so the only mismatch comes from the starting points
-# gamma(t) and gamma(T - t), both sampled from one forward integration of the orbit (~1e-12 apart).
-# The flow amplifies this by ~lambda_u^(|t|/T) ~ 1e4 over the ~1.3-period flight: ~1e-8 expected
-# (measured worst 3.2e-8, median 9e-10, independent of integrator tolerance).
 SYMMETRY_TOL = 1e-7
 
 
