@@ -1,0 +1,5 @@
+# Language stats on GitHub: count the Python code, not generated outputs.
+docs/** linguist-documentation
+notebooks/** linguist-documentation
+data/** linguist-generated
+*.ipynb linguist-documentation
