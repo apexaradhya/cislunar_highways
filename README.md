@@ -35,4 +35,6 @@ Low earth orbits at 185 km to an L2 halo computed in the full CR3B problem:
 Lagrange points are printed through the L2 halo orbit which I used to determine low energy transfers with its manifold tubes.
 
 
-Please note that this project was designed and built by myself (Aradhya Pasikanti), but claude was used in the development of the following technical aspects (all qualitative design done by me): claude implemented the halo-orbit solvers and the invariant-manifold with Poincaré-section tools. In addition, it also facilated in compiling and cross checking the data of the 106 tests with NASA JPL's Gateway data.
+Please note that this project was designed and built by myself (Aradhya Pasikanti), but claude was used in the development of the following technical aspects (all qualitative design done by me): claude implemented the halo-orbit solvers and the invariant-manifold with Poincaré-section tools. 
+
+In addition, it also facilated in compiling and cross checking the data of the 106 tests with NASA JPL's Gateway data.
