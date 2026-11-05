@@ -17,22 +17,16 @@ The integrators, root finder, differential corrector, continuation and manifold 
 
 ## Results
 
-Low earth orbits at 185 km to an L2 halo computed in the full CR3B problem:
-
 | Design | TLI | Second burn | **Total Δv** | Flight time |
 |---|---|---|---|---|
 | Conic → 100 km lunar orbit (textbook estimate) | 3,135 m/s | 824 m/s | **3,959 m/s** | 5 d |
 | Direct → L2 halo | 3,161 m/s | 941 m/s | **4,103 m/s** | 6 d |
 | Low energy, riding the stable manifold → L2 halo | 3,107 m/s | 325 m/s | **3,432 m/s** | 168 d |
 
-
-- **Saving:** the manifold route saves 671 m/s (16 %) but takes 27× longer. Sweeping 546 transfers across 7 halos found savings of 450–660 m/s for L2 halos but only 40–150 m/s for L1 halos
-- **Connections:** verified zero-Δv path (through NASA JPL) from an L1 orbit to an L2 orbit takes around 48.5 days
-- **Gateway orbit:**  9:2 approximately rectilinear halo orbit repeats roughly every 6.562 days with perilune radius 3249 km and apolune radius 71222 km. Gateway values are about 3200–3560 km and 70000–71850 km.
-- **Predictions:** linear theory forecast how fast 500 very very slightly perturbed spacecraft spread apart from about 10 km to 10000 km within half a day.
+Linear theory forecast 500  slightly pertubed spacecraft spread apart from about 10 km to 10000 km within half a day.
 
 
-Lagrange points are printed through the L2 halo orbit which I used to determine low energy transfers with its manifold tubes.
+Lagrange points are printed through the L2 halo orbit which are used to determine low energy transfers with manifold tubes.
 
 
 Please note that this project was designed and built by myself (Aradhya Pasikanti), but claude was used in the development of the following technical aspects (all qualitative design done by me): claude implemented the halo-orbit solvers and the invariant-manifold with Poincaré-section tools. 
