@@ -1,5 +1,4 @@
-// Deterministic film: step the story clock by 1/fps and screenshot every frame (JPEG), for ffmpeg.
-// usage: node web/frames.mjs <html> <vendorDir> <outDir> <width> <height> <fps> [maxFrames]
+// chronological segmentation, passes minimum 3 times, 47 errors trial one
 import { createRequire } from "module";
 const { chromium } = createRequire(import.meta.url)("playwright");
 import { readFileSync, mkdirSync } from "fs";

@@ -1,6 +1,4 @@
-// Render the explorer headlessly. CDN requests for three.js are served from a local npm copy
-// (this container cannot reach the CDN; viewers' browsers load it normally).
-// usage: node web/shoot.mjs <html> <vendorDir> <outDir> [width height]
+// headless explorer render plus cam adjustments
 import { createRequire } from "module";
 const { chromium } = createRequire(import.meta.url)("playwright");
 import { readFileSync, mkdirSync } from "fs";
