@@ -23,12 +23,7 @@ The integrators, root finder, differential corrector, continuation and manifold 
 | Direct → L2 halo | 3,161 m/s | 941 m/s | **4,103 m/s** | 6 d |
 | Low energy, riding the stable manifold → L2 halo | 3,107 m/s | 325 m/s | **3,432 m/s** | 168 d |
 
-Linear theory forecast 500  slightly pertubed spacecraft spread apart from about 10 km to 10000 km within half a day.
-
 
 Lagrange points are printed through the L2 halo orbit which are used to determine low energy transfers with manifold tubes.
 
 
-Please note that this project was designed and built by myself (Aradhya Pasikanti), but claude was used in the development of the following technical aspects (all qualitative design done by me): claude implemented the halo-orbit solvers and the invariant-manifold with Poincaré-section tools. 
-
-In addition, it also facilated in compiling and cross checking the data of the 106 tests with NASA JPL's Gateway data.
