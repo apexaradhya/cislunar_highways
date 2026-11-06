@@ -1,0 +1,10 @@
+# Colours match the explorer's tokens (see DESIGN.md).
+[theme]
+base = "dark"
+primaryColor = "#5ec8ff"
+backgroundColor = "#04060b"
+secondaryBackgroundColor = "#0b111d"
+textColor = "#e8edf6"
+
+[browser]
+gatherUsageStats = false
