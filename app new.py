@@ -43,9 +43,37 @@ for _name in [m for m in sys.modules if m == "cislunar" or m.startswith("cisluna
     del sys.modules[_name]  # drop any half-found "cislunar" so the real one is loaded
 ROOT = _data.parent.parent
 
-from cislunar import lagrange, manifolds, orbits, transfer  # noqa: E402
-from cislunar.constants import EARTH_MOON, R_EARTH_KM, R_MOON_KM  # noqa: E402
-from cislunar.shooting import SymmetricOrbit, full_period  # noqa: E402
+try:
+    from cislunar import lagrange, manifolds, orbits, transfer
+    from cislunar.constants import EARTH_MOON, R_EARTH_KM, R_MOON_KM
+    from cislunar.shooting import SymmetricOrbit, full_period
+except Exception as exc:  # show the real reason instead of Streamlit's redacted error
+    _needed = [
+        "__init__",
+        "constants",
+        "units",
+        "cr3bp",
+        "integrators",
+        "rootfind",
+        "stm",
+        "lagrange",
+        "shooting",
+        "orbits",
+        "manifolds",
+        "transfer",
+    ]
+    _have = {f.stem for f in _pkg.parent.glob("*.py")}
+    _missing = [n + ".py" for n in _needed if n not in _have]
+    st.error(
+        f"Loading the physics code failed: `{type(exc).__name__}: {exc}`\n\n"
+        f"Code folder used: `{_pkg.parent.relative_to(HERE)}`\n\n"
+        + (
+            f"Files missing from it: {', '.join(_missing)}"
+            if _missing
+            else "All the code files are there."
+        )
+    )
+    st.stop()
 
 U = EARTH_MOON
 MU, L, DAYS = U.mu, U.length_km, U.time_days
